@@ -186,6 +186,222 @@ PUBLIC_HERITAGE_MAPS = {
             "- [S4] OpenStreetMap Ramappa Temple basemap reference: https://www.openstreetmap.org/#map=15/18.2593/79.9436",
         ],
     },
+    "humayuns_tomb": {
+        "name": "Humayun's Tomb",
+        "aliases": ("humayun's tomb", "humayun tomb", "humayuns tomb"),
+        "lat": 28.5933,
+        "lon": 77.2507,
+        "zoom": 16,
+        "delta": 0.0150,
+        "sources": [
+            "- [S1] UNESCO Humayun's Tomb: https://whc.unesco.org/en/list/232/",
+            "- [S2] OpenStreetMap Humayun's Tomb map view: https://www.openstreetmap.org/#map=16/28.5933/77.2507",
+        ],
+    },
+    "brihadisvara": {
+        "name": "Brihadisvara Temple, Thanjavur",
+        "aliases": ("brihadisvara", "brihadeeswarar", "thanjavur temple", "tanjore temple"),
+        "lat": 10.7828,
+        "lon": 79.1318,
+        "zoom": 16,
+        "delta": 0.0150,
+        "sources": [
+            "- [S1] UNESCO Great Living Chola Temples: https://whc.unesco.org/en/list/250/",
+            "- [S2] OpenStreetMap Brihadisvara map view: https://www.openstreetmap.org/#map=16/10.7828/79.1318",
+        ],
+    },
+    "gangaikonda_cholapuram": {
+        "name": "Gangaikonda Cholapuram Temple",
+        "aliases": ("gangaikonda cholapuram", "gangaikondacholapuram"),
+        "lat": 11.2060,
+        "lon": 79.4500,
+        "zoom": 15,
+        "delta": 0.0200,
+        "sources": [
+            "- [S1] UNESCO Great Living Chola Temples: https://whc.unesco.org/en/list/250/",
+            "- [S2] OpenStreetMap Gangaikonda Cholapuram map view: https://www.openstreetmap.org/#map=15/11.2060/79.4500",
+        ],
+    },
+    "darasuram": {
+        "name": "Airavatesvara Temple, Darasuram",
+        "aliases": ("darasuram", "airavatesvara", "airavateswarar"),
+        "lat": 10.9480,
+        "lon": 79.3560,
+        "zoom": 16,
+        "delta": 0.0150,
+        "sources": [
+            "- [S1] UNESCO Great Living Chola Temples: https://whc.unesco.org/en/list/250/",
+            "- [S2] OpenStreetMap Darasuram map view: https://www.openstreetmap.org/#map=16/10.9480/79.3560",
+        ],
+    },
+    "belur": {
+        "name": "Chennakeshava Temple, Belur",
+        "aliases": ("belur", "chennakeshava"),
+        "lat": 13.1628,
+        "lon": 75.8580,
+        "zoom": 16,
+        "delta": 0.0150,
+        "sources": [
+            "- [S1] UNESCO Sacred Ensembles of the Hoysalas: https://whc.unesco.org/en/list/1670/",
+            "- [S2] OpenStreetMap Belur map view: https://www.openstreetmap.org/#map=16/13.1628/75.8580",
+        ],
+    },
+    "halebidu": {
+        "name": "Hoysaleswara Temple, Halebidu",
+        "aliases": ("halebidu", "halebid", "hoysaleswara"),
+        "lat": 13.2120,
+        "lon": 75.9940,
+        "zoom": 16,
+        "delta": 0.0150,
+        "sources": [
+            "- [S1] UNESCO Sacred Ensembles of the Hoysalas: https://whc.unesco.org/en/list/1670/",
+            "- [S2] OpenStreetMap Halebidu map view: https://www.openstreetmap.org/#map=16/13.2120/75.9940",
+        ],
+    },
+    "somanathapura": {
+        "name": "Keshava Temple, Somanathapura",
+        "aliases": ("somanathapura", "somnathpur", "keshava temple"),
+        "lat": 12.2756,
+        "lon": 76.8827,
+        "zoom": 16,
+        "delta": 0.0150,
+        "sources": [
+            "- [S1] UNESCO Sacred Ensembles of the Hoysalas: https://whc.unesco.org/en/list/1670/",
+            "- [S2] OpenStreetMap Somanathapura map view: https://www.openstreetmap.org/#map=16/12.2756/76.8827",
+        ],
+    },
+    "rakhigarhi": {
+        "name": "Rakhigarhi Harappan Archaeological Area",
+        "aliases": ("rakhigarhi",),
+        "lat": 29.2870,
+        "lon": 76.1130,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] Harappan Cemetery of Rakhigarhi: https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0192299",
+            "- [S2] OpenStreetMap Rakhigarhi regional map view: https://www.openstreetmap.org/#map=13/29.2870/76.1130",
+        ],
+    },
+    "sinauli": {
+        "name": "Sinauli Archaeological Area",
+        "aliases": ("sinauli", "sanauli"),
+        "lat": 29.1300,
+        "lon": 77.2300,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] Indian Express: Sinauli Chariots and Pre-Iron Age Finds: https://indianexpress.com/article/express-sunday-eye/wheel-of-time-chariots-and-sophisticated-weapons-from-the-pre-iron-age-5220282/",
+            "- [S2] OpenStreetMap Sinauli regional map view: https://www.openstreetmap.org/#map=13/29.1300/77.2300",
+        ],
+    },
+    "daimabad": {
+        "name": "Daimabad Archaeological Area",
+        "aliases": ("daimabad",),
+        "lat": 19.5150,
+        "lon": 74.7060,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] MAP Academy: Daimabad Bronzes: https://mapacademy.io/article/daimabad-bronzes/",
+            "- [S2] OpenStreetMap Daimabad regional map view: https://www.openstreetmap.org/#map=13/19.5150/74.7060",
+        ],
+    },
+    "maheshwar_navdatoli": {
+        "name": "Maheshwar and Navdatoli Archaeological Area",
+        "aliases": ("maheshwar", "navdatoli", "maheshwar and navdatoli"),
+        "lat": 22.1760,
+        "lon": 75.5870,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] Deccan College Excavations at Maheshwar and Navdatoli 1952-53: https://virasat.dcpune.ac.in/jspui/handle/123456789/35810?mode=full",
+            "- [S2] OpenStreetMap Maheshwar/Navdatoli regional map view: https://www.openstreetmap.org/#map=13/22.1760/75.5870",
+        ],
+    },
+    "mansar": {
+        "name": "Mansar Archaeological Area",
+        "aliases": ("mansar",),
+        "lat": 21.3970,
+        "lon": 79.2630,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] Mansar Site and Excavation Archive: https://zenodo.org/record/583415",
+            "- [S2] OpenStreetMap Mansar regional map view: https://www.openstreetmap.org/#map=13/21.3970/79.2630",
+        ],
+    },
+    "ahichhatra": {
+        "name": "Ahichhatra Archaeological Area",
+        "aliases": ("ahichhatra", "panchala capital"),
+        "lat": 28.3670,
+        "lon": 79.1330,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] Ground Penetrating Radar Investigations at Panchala and Vatsa Capitals: https://www.sciencedirect.com/science/article/pii/S2352409X23004467",
+            "- [S2] OpenStreetMap Ahichhatra regional map view: https://www.openstreetmap.org/#map=13/28.3670/79.1330",
+        ],
+    },
+    "kaushambi": {
+        "name": "Kaushambi Archaeological Area",
+        "aliases": ("kaushambi", "vatsa capital"),
+        "lat": 25.3380,
+        "lon": 81.3920,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] Ground Penetrating Radar Investigations at Panchala and Vatsa Capitals: https://www.sciencedirect.com/science/article/pii/S2352409X23004467",
+            "- [S2] OpenStreetMap Kaushambi regional map view: https://www.openstreetmap.org/#map=13/25.3380/81.3920",
+        ],
+    },
+    "dholavira": {
+        "name": "Dholavira Harappan City",
+        "aliases": ("dholavira",),
+        "lat": 23.8870,
+        "lon": 70.2150,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] OpenStreetMap Dholavira regional map view: https://www.openstreetmap.org/#map=13/23.8870/70.2150",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+        ],
+    },
+    "lothal": {
+        "name": "Lothal Archaeological Site",
+        "aliases": ("lothal",),
+        "lat": 22.5220,
+        "lon": 72.2490,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] OpenStreetMap Lothal regional map view: https://www.openstreetmap.org/#map=13/22.5220/72.2490",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+        ],
+    },
+    "kalibangan": {
+        "name": "Kalibangan Archaeological Site",
+        "aliases": ("kalibangan", "kalibanga"),
+        "lat": 29.4730,
+        "lon": 74.1320,
+        "zoom": 13,
+        "delta": 0.0500,
+        "sources": [
+            "- [S1] OpenStreetMap Kalibangan regional map view: https://www.openstreetmap.org/#map=13/29.4730/74.1320",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+        ],
+    },
+    "bhimbetka": {
+        "name": "Bhimbetka Rock Shelters",
+        "aliases": ("bhimbetka",),
+        "lat": 22.9390,
+        "lon": 77.6130,
+        "zoom": 14,
+        "delta": 0.0400,
+        "sources": [
+            "- [S1] OpenStreetMap Bhimbetka regional map view: https://www.openstreetmap.org/#map=14/22.9390/77.6130",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+        ],
+    },
 }
 
 
@@ -228,6 +444,21 @@ def research_map_config(site_id: str) -> dict | None:
     }
 
 
+def research_sources_for(config: dict) -> list[str]:
+    if config.get("research_sources"):
+        return config["research_sources"]
+
+    sources = list(config.get("sources", []))
+    next_id = len(sources) + 1
+    source_text = "\n".join(sources)
+    if "Bhuvan Indian Geo-Platform" not in source_text:
+        sources.append(f"- [S{next_id}] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/")
+        next_id += 1
+    if "Bhoonidhi Indian Earth Observation Data Hub" not in source_text:
+        sources.append(f"- [S{next_id}] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/")
+    return sources
+
+
 def answer_map_view(question: str, route: dict) -> tuple[str, list[str]] | None:
     if route.get("answer_mode") not in {"map_view", "research_map_view"}:
         return None
@@ -241,7 +472,7 @@ def answer_map_view(question: str, route: dict) -> tuple[str, list[str]] | None:
         return None
 
     if route.get("answer_mode") == "research_map_view":
-        research_sources = config.get("research_sources") or config["sources"]
+        research_sources = research_sources_for(config)
         answer = "\n".join(
             [
                 f"Here is a research-oriented archaeology map workspace for {config['name']}.",
