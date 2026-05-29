@@ -88,11 +88,14 @@ def evaluate_answer_quality(
     context: str,
     source_lines: list[str] | None = None,
 ) -> dict:
+    from citation_verifier import verify_citations
+
     source_ids = source_ids_from_lines(source_lines)
     answer_ids = citation_ids_in_answer(answer)
     invalid_ids = sorted(answer_ids - source_ids) if source_ids else []
     issues = []
     warnings = []
+    citation_report = verify_citations(answer, context, source_lines)
 
     if source_ids and not answer_ids:
         issues.append("No inline RAG citations were found even though sources were available.")
@@ -114,6 +117,11 @@ def evaluate_answer_quality(
     if source_ids and not any(source_id in context for source_id in source_ids):
         warnings.append("Source IDs were provided, but not all IDs appear in the retrieved context labels.")
 
+    for issue in citation_report["issues"]:
+        issues.append(f"Citation verifier: {issue}")
+    for warning in citation_report["warnings"]:
+        warnings.append(f"Citation verifier: {warning}")
+
     score = 100
     score -= 30 * len(issues)
     score -= 10 * len(warnings)
@@ -126,6 +134,7 @@ def evaluate_answer_quality(
         "warnings": warnings,
         "source_ids": sorted(source_ids),
         "answer_ids": sorted(answer_ids),
+        "citation_verifier": citation_report,
         "question": question,
     }
 

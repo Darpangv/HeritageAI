@@ -25,6 +25,10 @@ def main() -> None:
     report = evaluate_answer_quality(args.question, answer, args.context, args.source)
     print(f"status={report['status']}")
     print(f"score={report['score']}")
+    citation_report = report.get("citation_verifier", {})
+    if citation_report:
+        print(f"citation_status={citation_report.get('status')}")
+        print(f"citation_checked_claims={citation_report.get('checked_claims')}")
     for issue in report["issues"]:
         print(f"issue={issue}")
     for warning in report["warnings"]:

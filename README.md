@@ -218,6 +218,8 @@ unknown or invalid source IDs
 factual-looking sentences without citations
 short or weak retrieved context
 source IDs that do not appear in retrieved context labels
+citation/source text overlap
+page references that do not match retrieved pages
 ```
 
 It does not reject sources because of old scans, bad OCR, unknown language, damaged pages, maps, images, or archaeology-specific document quality issues. Those materials can still be valuable. When the guard finds a problem, it appends an `Answer Quality Guard` warning block to the answer so the user knows the response needs review.
@@ -226,6 +228,12 @@ Check a saved answer manually:
 
 ```bash
 run_check_answer_quality.bat data/extracted/last_answer.md --source "- [S1] Example source: https://example.com"
+```
+
+Run only the citation verifier:
+
+```bash
+run_verify_citations.bat data/extracted/last_answer.md --context-file data/extracted/retrieved_context.txt --source "- [S1] Example source page 1: https://example.com"
 ```
 
 The same result is saved to:
