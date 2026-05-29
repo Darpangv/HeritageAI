@@ -349,7 +349,7 @@ If a routed question asks for source links, for example GIS/satellite links, the
 
 For site feature questions such as `list out Hampi temples`, the router returns a direct monument list instead of confusing the word `list` with a request for source URLs. Source-link mode is still available when the question explicitly asks for links or sources.
 
-For map display questions such as `show me Hampi map`, the local chat UI renders an embedded public OpenStreetMap view and includes official/contextual source links below the answer.
+For map display questions such as `show me Hampi map`, the local chat UI renders an embedded public OpenStreetMap view and includes official/contextual source links below the answer. Public map views are available for known heritage sites including Hampi, Sanchi, Nalanda, Mahabalipuram/Mamallapuram, Pattadakal, Ellora, Taj Mahal, Agra Fort, Fatehpur Sikri, and Ramappa Temple.
 
 Inspect a route without running the full agent:
 

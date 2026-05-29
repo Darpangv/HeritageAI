@@ -74,6 +74,8 @@ def detect_dynasty(text: str) -> tuple[str, dict] | None:
 
 
 def route_question(question: str) -> dict:
+    from map_views import detect_map_site
+
     text = question.lower()
     route = {
         "intent": "general_heritage",
@@ -193,10 +195,10 @@ def route_question(question: str) -> dict:
         route["answer_mode"] = "source_list"
         route["reason"] = f"{route['reason']}; question asks for source links/list"
 
-    if route["intent"] == "gis_satellite" and _contains(text, ("hampi", "vijayanagara", "vijayanagar")) and _contains(text, ("map", "show", "open", "view")):
+    map_site = detect_map_site(question)
+    if route.get("answer_mode") != "source_list" and map_site and _contains(text, ("map", "show", "open", "view")):
         route["answer_mode"] = "map_view"
-        route["site"] = "hampi"
-        route["required_terms"] = ["hampi", "vijayanagara", "vijayanagar"]
+        route["site"] = map_site
         route["reason"] = f"{route['reason']}; question asks to display a map view"
 
     return route
