@@ -13,6 +13,7 @@ import streamlit.components.v1 as components
 PROJECT_ROOT = Path(__file__).resolve().parent
 LAST_ANSWER = PROJECT_ROOT / "data" / "extracted" / "last_answer.md"
 MAP_EMBED_RE = re.compile(r"<!--MAP_EMBED_URL:(.*?)-->")
+RESEARCH_MAP_RE = re.compile(r"<!--RESEARCH_MAP_SITE:(.*?)-->")
 
 
 st.set_page_config(
@@ -90,11 +91,104 @@ def clear_memory(session_id: str) -> str:
     return "\n".join(part for part in [result.stdout, result.stderr] if part.strip())
 
 
+def research_map_html(site_id: str) -> str:
+    maps = {
+        "hampi": {
+            "name": "Hampi World Heritage Area",
+            "lat": 15.3350,
+            "lon": 76.4600,
+            "zoom": 14,
+        }
+    }
+    site = maps.get(site_id, maps["hampi"])
+    return f"""
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <style>
+        html, body, #map {{ height: 100%; margin: 0; }}
+        .panel {{
+          background: rgba(255, 255, 255, 0.94);
+          border: 1px solid #bbb;
+          border-radius: 6px;
+          box-shadow: 0 1px 8px rgba(0,0,0,.18);
+          color: #222;
+          font: 13px/1.35 system-ui, -apple-system, Segoe UI, sans-serif;
+          max-width: 310px;
+          padding: 10px 12px;
+        }}
+        .panel h3 {{ font-size: 14px; margin: 0 0 6px; }}
+        .panel ul {{ margin: 6px 0 0 18px; padding: 0; }}
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        const map = L.map('map').setView([{site["lat"]}, {site["lon"]}], {site["zoom"]});
+        const satellite = L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}',
+          {{ attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics, and contributors' }}
+        );
+        const osm = L.tileLayer(
+          'https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png',
+          {{ attribution: '&copy; OpenStreetMap contributors' }}
+        );
+        const topo = L.tileLayer(
+          'https://{{s}}.tile.opentopomap.org/{{z}}/{{x}}/{{y}}.png',
+          {{ attribution: 'Map data &copy; OpenStreetMap contributors, SRTM | OpenTopoMap' }}
+        );
+        satellite.addTo(map);
+
+        const marker = L.marker([{site["lat"]}, {site["lon"]}]).bindPopup('{site["name"]}');
+        const studyArea = L.circle([{site["lat"]}, {site["lon"]}], {{
+          radius: 4200,
+          color: '#b3261e',
+          fillColor: '#ffcc00',
+          fillOpacity: 0.12,
+          weight: 2
+        }}).bindPopup('Approximate research study area for contextual landscape review');
+        marker.addTo(map);
+        studyArea.addTo(map);
+
+        L.control.layers(
+          {{ 'Satellite imagery': satellite, 'OpenStreetMap basemap': osm, 'Topographic basemap': topo }},
+          {{ 'Public site marker': marker, 'Approximate study area': studyArea }},
+          {{ collapsed: false }}
+        ).addTo(map);
+
+        const info = L.control({{ position: 'bottomleft' }});
+        info.onAdd = function () {{
+          const div = L.DomUtil.create('div', 'panel');
+          div.innerHTML = `
+            <h3>Research Map: {site["name"]}</h3>
+            <div>Use this as a visual workspace, then confirm evidence through official GIS/satellite portals and published archaeology sources.</div>
+            <ul>
+              <li>Satellite context</li>
+              <li>Topographic context</li>
+              <li>Approximate study area</li>
+              <li>Public site marker</li>
+            </ul>
+          `;
+          return div;
+        }};
+        info.addTo(map);
+      </script>
+    </body>
+    </html>
+    """
+
+
 def render_answer(answer: str) -> None:
     match = MAP_EMBED_RE.search(answer)
-    cleaned_answer = MAP_EMBED_RE.sub("", answer).strip()
+    research_match = RESEARCH_MAP_RE.search(answer)
+    cleaned_answer = RESEARCH_MAP_RE.sub("", MAP_EMBED_RE.sub("", answer)).strip()
     st.markdown(cleaned_answer)
-    if match:
+    if research_match:
+        components.html(research_map_html(research_match.group(1).strip()), height=540)
+    elif match:
         embed_url = match.group(1).strip()
         components.html(
             f"""

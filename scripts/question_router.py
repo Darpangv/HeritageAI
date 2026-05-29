@@ -77,6 +77,7 @@ def route_question(question: str) -> dict:
     from map_views import detect_map_site
 
     text = question.lower()
+    research_map_terms = ("research grade", "research-grade", "archaeology", "archaeological", "gis", "satellite", "remote sensing", "layers")
     route = {
         "intent": "general_heritage",
         "answer_mode": "rag",
@@ -197,9 +198,9 @@ def route_question(question: str) -> dict:
 
     map_site = detect_map_site(question)
     if route.get("answer_mode") != "source_list" and map_site and _contains(text, ("map", "show", "open", "view")):
-        route["answer_mode"] = "map_view"
+        route["answer_mode"] = "research_map_view" if _contains(text, research_map_terms) else "map_view"
         route["site"] = map_site
-        route["reason"] = f"{route['reason']}; question asks to display a map view"
+        route["reason"] = f"{route['reason']}; question asks to display a {'research ' if route['answer_mode'] == 'research_map_view' else ''}map view"
 
     return route
 

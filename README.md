@@ -351,6 +351,8 @@ For site feature questions such as `list out Hampi temples`, the router returns 
 
 For map display questions such as `show me Hampi map`, the local chat UI renders an embedded public OpenStreetMap view and includes official/contextual source links below the answer. Public map views are available for known heritage sites including Hampi, Sanchi, Nalanda, Mahabalipuram/Mamallapuram, Pattadakal, Ellora, Taj Mahal, Agra Fort, Fatehpur Sikri, and Ramappa Temple.
 
+For research-map questions such as `show me Hampi map in chat for research grade archaeology`, the chat UI renders a research-oriented map workspace with satellite, topographic, public site marker, and approximate study-area layers. It also returns research links for Bhuvan/NRSC, Bhoonidhi, UNESCO, and Hampi GIS/digital archaeology papers.
+
 Inspect a route without running the full agent:
 
 ```bash

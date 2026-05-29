@@ -15,6 +15,14 @@ PUBLIC_HERITAGE_MAPS = {
             "- [S3] Karnataka Tourism Hampi: https://karnatakatourism.org/destinations/hampi/",
             "- [S4] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
         ],
+        "research_sources": [
+            "- [S1] UNESCO Group of Monuments at Hampi: https://whc.unesco.org/en/list/241/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] Early Medieval Shaiva Pilgrimage Landscape at Hampi: https://www.mdpi.com/2077-1444/13/6/569",
+            "- [S5] Digital Analysis of Mula Virupaksha Temple Hampi: https://www.mdpi.com/2409-9252/2/3/23",
+            "- [S6] OpenStreetMap Hampi basemap reference: https://www.openstreetmap.org/#map=14/15.3350/76.4600",
+        ],
     },
     "sanchi": {
         "name": "Buddhist Monuments at Sanchi",
@@ -153,7 +161,7 @@ def embed_url(config: dict) -> str:
 
 
 def answer_map_view(question: str, route: dict) -> tuple[str, list[str]] | None:
-    if route.get("answer_mode") != "map_view":
+    if route.get("answer_mode") not in {"map_view", "research_map_view"}:
         return None
 
     site_id = route.get("site") or detect_map_site(question)
@@ -163,6 +171,27 @@ def answer_map_view(question: str, route: dict) -> tuple[str, list[str]] | None:
     config = PUBLIC_HERITAGE_MAPS.get(site_id)
     if not config:
         return None
+
+    if route.get("answer_mode") == "research_map_view":
+        research_sources = config.get("research_sources") or config["sources"]
+        answer = "\n".join(
+            [
+                f"Here is a research-oriented archaeology map workspace for {config['name']}.",
+                "",
+                "The embedded map uses satellite/topographic basemap options plus a site-area overlay. Use the research links below for authoritative GIS/satellite layers, published archaeological interpretation, and official heritage context.",
+                "",
+                "Research layer checklist:",
+                "1. Satellite imagery: Bhuvan/NRSC or Bhoonidhi for Indian earth observation data.",
+                "2. Official heritage boundary/context: UNESCO and ASI records where available.",
+                "3. Published archaeology/GIS interpretation: Hampi sacred landscape and digital archaeology papers.",
+                "4. Public basemap reference: OpenStreetMap for roads, settlements, and orientation only.",
+                "",
+                "Map caution: this is for lawful research and education. Do not use it for excavation, artifact removal, trespass, or exposing vulnerable site details.",
+                "",
+                f"<!--RESEARCH_MAP_SITE:{site_id}-->",
+            ]
+        )
+        return answer, research_sources
 
     answer = "\n".join(
         [
