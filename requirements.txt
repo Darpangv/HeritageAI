@@ -1,3 +1,7 @@
 streamlit>=1.35
 pandas>=2.0
 pypdf>=5.0
+
+# Optional OCR support. Also install the Tesseract OCR engine separately.
+Pillow>=10.0
+pytesseract>=0.3

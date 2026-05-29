@@ -291,6 +291,43 @@ run_build_embeddings.bat --pdf-only --limit 10
 
 After the vector store exists, `run_agent.bat` will use embedding search first. If no vector store exists, it falls back to webpage/PDF search and extraction.
 
+## OCR Pipeline
+
+Use the OCR pipeline for scanned pages, photographs, maps, inscriptions, or PDFs where normal text extraction is weak.
+
+```bash
+run_ocr_pipeline.bat "data/pdfs/example_scan.pdf"
+run_ocr_pipeline.bat "C:\path\to\inscription.jpg" --langs eng+hin+kan+tel+tam
+```
+
+Outputs are saved locally and ignored by Git:
+
+```text
+data/ocr/*.ocr.json
+data/ocr/*.ocr.md
+```
+
+The OCR report includes:
+
+```text
+extracted text
+OCR confidence
+probable script family
+word count
+method used
+optional English translation
+```
+
+For image files, install Tesseract OCR on Windows and ensure its language packs are available. The Python dependencies are listed in `requirements.txt`, but the Tesseract engine itself is a separate system install.
+
+Optional translation to English:
+
+```bash
+run_ocr_pipeline.bat "C:\path\to\scan.jpg" --translate
+```
+
+Translation uses the configured ChatGPT brain. For archaeology material, low-confidence OCR, unknown scripts, damaged scans, and partial maps are preserved with confidence labels instead of being treated as certain.
+
 ## Question Router
 
 The agent routes each question before retrieval. It detects whether the question is mainly about:

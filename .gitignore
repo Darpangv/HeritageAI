@@ -19,6 +19,7 @@ data/logs/
 data/pdfs/
 data/extracted/
 data/vector_store/
+data/ocr/
 metadata/backups/
 
 # OS/editor noise
