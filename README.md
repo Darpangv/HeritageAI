@@ -206,6 +206,28 @@ run_agent.bat "What monuments and structures survive at Hampi?"
 
 Every agent answer uses RAG citations. Retrieved chunks are labeled as `[S1]`, `[S2]`, and so on, and the answer is instructed to cite factual claims inline, such as `[S1, page 4]`. The result also ends with a `Sources` section mapping each citation ID to the source title, page, and link.
 
+## Answer Quality Guard
+
+Generated RAG answers now pass through `scripts/answer_quality_guard.py` before they are saved or shown.
+
+The guard checks:
+
+```text
+inline citation presence
+unknown or invalid source IDs
+factual-looking sentences without citations
+short or weak retrieved context
+source IDs that do not appear in retrieved context labels
+```
+
+It does not reject sources because of old scans, bad OCR, unknown language, damaged pages, maps, images, or archaeology-specific document quality issues. Those materials can still be valuable. When the guard finds a problem, it appends an `Answer Quality Guard` warning block to the answer so the user knows the response needs review.
+
+Check a saved answer manually:
+
+```bash
+run_check_answer_quality.bat data/extracted/last_answer.md --source "- [S1] Example source: https://example.com"
+```
+
 The same result is saved to:
 
 ```text

@@ -307,6 +307,12 @@ def call_openai(question: str, context: str, sources: list[str] | None = None) -
     return ask_chatgpt(question=question, context=context, sources=sources)
 
 
+def apply_answer_quality_guard(question: str, answer: str, context: str, source_lines: list[str]) -> str:
+    from answer_quality_guard import guard_answer
+
+    return guard_answer(question=question, answer=answer, context=context, source_lines=source_lines)
+
+
 def unique_source_lines(sources: list[dict]) -> list[str]:
     seen = set()
     lines = []
@@ -448,6 +454,7 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
             ]
         )
         answer = call_openai(question, context, sources=source_lines)
+        answer = apply_answer_quality_guard(question, answer, context, source_lines)
         result_text = append_sources(answer, source_lines)
 
         output_path = EXTRACT_DIR / "last_answer.md"
@@ -507,6 +514,7 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
         context = build_context(selected_pages)
         source_lines = unique_source_lines(cited_pages)
         answer = call_openai(question, context, sources=source_lines)
+        answer = apply_answer_quality_guard(question, answer, context, source_lines)
         result_text = append_sources(answer, source_lines)
         output_path = EXTRACT_DIR / "last_answer.md"
         output_path.write_text(
@@ -557,6 +565,7 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
     context = build_context(all_selected_pages)
     source_lines = unique_source_lines(used_sources)
     answer = call_openai(question, context, sources=source_lines)
+    answer = apply_answer_quality_guard(question, answer, context, source_lines)
     result_text = append_sources(answer, source_lines)
 
     output_path = EXTRACT_DIR / "last_answer.md"

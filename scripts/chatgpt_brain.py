@@ -28,6 +28,8 @@ Your job:
 - Use only the supplied sources and retrieved context.
 - If the context is weak or incomplete, say what is missing.
 - Do not invent dynasties, dates, sites, inscriptions, or source claims.
+- Do not cite a source ID that is not listed in the retrieved context or source list.
+- If a factual sentence cannot be tied to a retrieved source, mark it as uncertain or omit it.
 - Keep answers useful for students, researchers, and heritage-tourism builders.
 
 {accessibility_prompt}
