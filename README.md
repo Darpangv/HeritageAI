@@ -393,7 +393,42 @@ Open:
 http://localhost:8502
 ```
 
-The chat UI does not show admin controls, logs, validation buttons, or source-management actions. It uses the same local agent pipeline as `run_agent.bat`, including question routing, RAG citations, source links, accessibility rules, and archaeology safety constraints.
+The chat UI does not show admin controls, logs, validation buttons, or source-management actions. It uses the same local agent pipeline as `run_agent.bat`, including question routing, conversation memory, RAG citations, source links, accessibility rules, and archaeology safety constraints.
+
+## Conversation Memory
+
+Conversation memory stores prior question/answer turns locally so follow-up questions can use earlier context.
+
+Storage:
+
+```text
+data/conversation_memory/conversations.sqlite
+```
+
+This folder is ignored by Git because it can contain private user conversation data.
+
+Run the agent with a specific memory session:
+
+```bash
+run_agent.bat "Tell me more about his temples" --session-id research-session-1
+```
+
+Disable memory for a run:
+
+```bash
+run_agent.bat "Explain Hampi" --no-memory
+```
+
+Inspect or clear memory:
+
+```bash
+run_memory.bat
+run_memory.bat --session-id research-session-1 --list
+run_memory.bat --session-id research-session-1 --query "Krishnadevaraya temples"
+run_memory.bat --session-id research-session-1 --clear
+```
+
+Conversation memory is treated as session context, not source evidence. The agent should not cite memory as a RAG source; factual claims still need retrieved source citations.
 
 ## Source Quality Scoring
 

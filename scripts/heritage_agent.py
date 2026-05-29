@@ -218,6 +218,12 @@ def build_context(selected_pages: list[dict[str, str | int]], max_chars: int = 1
     return "\n\n".join(chunks)
 
 
+def combine_context(memory_context: str, retrieval_context: str) -> str:
+    if memory_context and retrieval_context:
+        return f"{memory_context}\n\nRetrieved source context:\n{retrieval_context}"
+    return retrieval_context or memory_context
+
+
 def call_openai(question: str, context: str, sources: list[str] | None = None) -> str:
     from chatgpt_brain import ask_chatgpt
 
@@ -266,6 +272,27 @@ def append_sources(answer: str, source_lines: list[str]) -> str:
     return f"{answer.rstrip()}\n\nSources:\n" + "\n".join(source_lines)
 
 
+def save_answer(
+    question: str,
+    result_text: str,
+    session_id: str,
+    memory_enabled: bool,
+    route_text: str = "",
+) -> None:
+    output_path = EXTRACT_DIR / "last_answer.md"
+    output_path.write_text(
+        "\n\n".join([f"# Question\n\n{question}", "# Answer", result_text]),
+        encoding="utf-8",
+    )
+    if memory_enabled:
+        from conversation_memory import add_turn
+
+        add_turn(session_id=session_id, question=question, answer=result_text, route=route_text)
+    print("\nAnswer:\n")
+    print(result_text)
+    print(f"\nSaved result to {output_path}")
+
+
 def assign_citation_ids(items: list[dict], key_fields: list[str]) -> list[dict]:
     citation_by_key = {}
     next_index = 1
@@ -279,25 +306,34 @@ def assign_citation_ids(items: list[dict], key_fields: list[str]) -> list[dict]:
     return assigned
 
 
-def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_limit: int = 5) -> None:
+def answer_question(
+    question: str,
+    db_limit: int = 5,
+    pdf_limit: int = 3,
+    page_limit: int = 5,
+    session_id: str = "default",
+    memory_enabled: bool = True,
+) -> None:
     EXTRACT_DIR.mkdir(parents=True, exist_ok=True)
     from accessibility_policy import is_restricted_archaeology_request, restricted_response
     from question_router import expand_question, format_route, inventory_answer, route_question, source_list_answer
+    memory_context = ""
+    if memory_enabled:
+        from conversation_memory import build_memory_context, normalize_session_id
+
+        session_id = normalize_session_id(session_id)
+        memory_context = build_memory_context(session_id, question)
+        if memory_context:
+            print(f"Conversation memory: using relevant prior turns for session {session_id}.")
 
     if is_restricted_archaeology_request(question):
         result_text = append_sources(restricted_response(), ["- [S1] docs/end_user_accessibility_rules.md"])
-        output_path = EXTRACT_DIR / "last_answer.md"
-        output_path.write_text(
-            "\n\n".join([f"# Question\n\n{question}", "# Answer", result_text]),
-            encoding="utf-8",
-        )
-        print("\nAnswer:\n")
-        print(result_text)
-        print(f"\nSaved result to {output_path}")
+        save_answer(question, result_text, session_id, memory_enabled, route_text="restricted")
         return
 
     route = route_question(question)
-    print(f"Question route: {format_route(route)}")
+    route_text = format_route(route)
+    print(f"Question route: {route_text}")
     retrieval_question = expand_question(question, route)
     if retrieval_question != question:
         print(f"Expanded retrieval query: {retrieval_question}")
@@ -305,27 +341,13 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
     if route.get("answer_mode") == "source_inventory":
         answer = inventory_answer(question)
         result_text = append_sources(answer, ["- [S1] metadata/heritage_links.csv"])
-        output_path = EXTRACT_DIR / "last_answer.md"
-        output_path.write_text(
-            "\n\n".join([f"# Question\n\n{question}", "# Answer", result_text]),
-            encoding="utf-8",
-        )
-        print("\nAnswer:\n")
-        print(result_text)
-        print(f"\nSaved result to {output_path}")
+        save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
         return
 
     if route.get("answer_mode") == "source_list":
         answer = source_list_answer(question, route)
         result_text = append_sources(answer, ["- [S1] metadata/heritage_links.csv"])
-        output_path = EXTRACT_DIR / "last_answer.md"
-        output_path.write_text(
-            "\n\n".join([f"# Question\n\n{question}", "# Answer", result_text]),
-            encoding="utf-8",
-        )
-        print("\nAnswer:\n")
-        print(result_text)
-        print(f"\nSaved result to {output_path}")
+        save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
         return
 
     try:
@@ -358,7 +380,8 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
             }
             for hit in cited_hits
         ]
-        context = build_context(selected_pages)
+        retrieval_context = build_context(selected_pages)
+        context = combine_context(memory_context, retrieval_context)
         source_lines = unique_source_lines(
             [
                 {
@@ -374,16 +397,7 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
         answer = apply_answer_quality_guard(question, answer, context, source_lines)
         result_text = append_sources(answer, source_lines)
 
-        output_path = EXTRACT_DIR / "last_answer.md"
-        output = [
-            f"# Question\n\n{question}",
-            "# Answer",
-            result_text,
-        ]
-        output_path.write_text("\n\n".join(output), encoding="utf-8")
-        print("\nAnswer:\n")
-        print(result_text)
-        print(f"\nSaved result to {output_path}")
+        save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
         return
 
     database_hits = search_database(retrieval_question, limit=db_limit, route=route)
@@ -428,19 +442,13 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
             }
             for item in cited_pages
         ]
-        context = build_context(selected_pages)
+        retrieval_context = build_context(selected_pages)
+        context = combine_context(memory_context, retrieval_context)
         source_lines = unique_source_lines(cited_pages)
         answer = call_openai(question, context, sources=source_lines)
         answer = apply_answer_quality_guard(question, answer, context, source_lines)
         result_text = append_sources(answer, source_lines)
-        output_path = EXTRACT_DIR / "last_answer.md"
-        output_path.write_text(
-            "\n\n".join([f"# Question\n\n{question}", "# Answer", result_text]),
-            encoding="utf-8",
-        )
-        print("\nAnswer:\n")
-        print(result_text)
-        print(f"\nSaved result to {output_path}")
+        save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
         return
 
     if not pdf_candidates:
@@ -479,22 +487,14 @@ def answer_question(question: str, db_limit: int = 5, pdf_limit: int = 3, page_l
         print("PDFs were found, but no extractable text was available.")
         return
 
-    context = build_context(all_selected_pages)
+    retrieval_context = build_context(all_selected_pages)
+    context = combine_context(memory_context, retrieval_context)
     source_lines = unique_source_lines(used_sources)
     answer = call_openai(question, context, sources=source_lines)
     answer = apply_answer_quality_guard(question, answer, context, source_lines)
     result_text = append_sources(answer, source_lines)
 
-    output_path = EXTRACT_DIR / "last_answer.md"
-    output = [
-        f"# Question\n\n{question}",
-        "# Answer",
-        result_text,
-    ]
-    output_path.write_text("\n\n".join(output), encoding="utf-8")
-    print("\nAnswer:\n")
-    print(result_text)
-    print(f"\nSaved result to {output_path}")
+    save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
 
 
 def main() -> None:
@@ -503,6 +503,8 @@ def main() -> None:
     parser.add_argument("--db-limit", type=int, default=5)
     parser.add_argument("--pdf-limit", type=int, default=3)
     parser.add_argument("--page-limit", type=int, default=5)
+    parser.add_argument("--session-id", default="default", help="Conversation memory session ID.")
+    parser.add_argument("--no-memory", action="store_true", help="Disable conversation memory for this run.")
     args = parser.parse_args()
 
     answer_question(
@@ -510,6 +512,8 @@ def main() -> None:
         db_limit=args.db_limit,
         pdf_limit=args.pdf_limit,
         page_limit=args.page_limit,
+        session_id=args.session_id,
+        memory_enabled=not args.no_memory,
     )
 
 

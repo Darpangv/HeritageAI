@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 import streamlit as st
@@ -18,15 +19,21 @@ st.set_page_config(
 )
 
 
-def run_agent(question: str, page_limit: int) -> tuple[str, str]:
+def run_agent(question: str, page_limit: int, session_id: str, memory_enabled: bool) -> tuple[str, str]:
+    command = [
+        sys.executable,
+        "scripts/heritage_agent.py",
+        question,
+        "--page-limit",
+        str(page_limit),
+        "--session-id",
+        session_id,
+    ]
+    if not memory_enabled:
+        command.append("--no-memory")
+
     result = subprocess.run(
-        [
-            sys.executable,
-            "scripts/heritage_agent.py",
-            question,
-            "--page-limit",
-            str(page_limit),
-        ],
+        command,
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,
@@ -63,21 +70,51 @@ def reset_chat() -> None:
     ]
 
 
+def clear_memory(session_id: str) -> str:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/manage_conversation_memory.py",
+            "--session-id",
+            session_id,
+            "--clear",
+        ],
+        cwd=PROJECT_ROOT,
+        text=True,
+        capture_output=True,
+        timeout=60,
+    )
+    return "\n".join(part for part in [result.stdout, result.stderr] if part.strip())
+
+
 st.title("Indian Heritage AI Chat")
-st.caption("Local RAG chat with question routing, citations, source links, and archaeology safety rules.")
+st.caption("Local RAG chat with question routing, conversation memory, citations, source links, and archaeology safety rules.")
+
+if "session_id" not in st.session_state:
+    st.session_state.session_id = f"chat-{uuid.uuid4().hex[:12]}"
 
 with st.sidebar:
     st.header("Chat Settings")
     page_limit = st.slider("Retrieved chunks", min_value=1, max_value=10, value=5)
+    memory_enabled = st.toggle("Conversation memory", value=True)
     show_debug = st.toggle("Show route/debug output", value=False)
     if st.button("Clear Chat"):
         reset_chat()
         st.rerun()
+    if st.button("Clear Memory"):
+        output = clear_memory(st.session_state.session_id)
+        st.session_state.memory_notice = output or "Conversation memory cleared."
+        reset_chat()
+        st.rerun()
     st.divider()
+    st.caption(f"Memory session: `{st.session_state.session_id}`")
     st.caption("Answers are generated from local sources and end with citations when sources are available.")
 
 if "messages" not in st.session_state:
     reset_chat()
+
+if st.session_state.get("memory_notice"):
+    st.info(st.session_state.pop("memory_notice"))
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -94,7 +131,12 @@ if question:
 
     with st.chat_message("assistant"):
         with st.spinner("Searching sources and preparing answer..."):
-            answer, debug = run_agent(question, page_limit=page_limit)
+            answer, debug = run_agent(
+                question,
+                page_limit=page_limit,
+                session_id=st.session_state.session_id,
+                memory_enabled=memory_enabled,
+            )
         st.markdown(answer)
         if show_debug:
             with st.expander("Route and retrieval output"):

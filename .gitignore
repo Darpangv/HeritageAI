@@ -3,6 +3,7 @@
 *.env
 data/config/
 data/brain/
+data/conversation_memory/
 
 # Runtime artifacts
 __pycache__/
