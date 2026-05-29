@@ -8,8 +8,9 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 from csv_backup import write_csv_with_backup
-from heritage_agent import LinkParser, request_url
+from heritage_agent import request_url
 from source_quality import QUALITY_COLUMNS, quality_for
+from web_ingestion import extract_pdf_links, parse_web_document
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -118,12 +119,11 @@ def discover_from_source(row: dict[str, str], pdf_limit: int) -> list[dict[str, 
         log(f"Skipped source {url}: {type(error).__name__}: {error}")
         return []
 
-    parser = LinkParser(url)
-    parser.feed(html)
+    document = parse_web_document(url, html)
 
     discovered = []
     seen = set()
-    for link in parser.links:
+    for link in extract_pdf_links(document):
         pdf_url = link["url"].split("#", 1)[0]
         if not is_probably_pdf(pdf_url):
             continue

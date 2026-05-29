@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import sys
@@ -12,8 +13,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parents[0]
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from heritage_agent import download_pdf, extract_pdf_pages, is_pdf_url, tokenize  # noqa: E402
+from heritage_agent import download_pdf, extract_pdf_pages, is_pdf_url, request_url, tokenize  # noqa: E402
 from vector_db import SQLITE_FILE, VECTOR_DIR, TfidfVectorizer, VectorStore, embed_text  # noqa: E402
+from web_ingestion import parse_web_document  # noqa: E402
 
 
 CSV_FILE = PROJECT_ROOT / "metadata" / "heritage_links.csv"
@@ -68,7 +70,47 @@ def get_provider() -> str:
     return os.environ.get("HERITAGE_EMBEDDING_PROVIDER", "local").lower()
 
 
-def build_embeddings(query: str | None = None, limit: int | None = None, append: bool = False) -> None:
+def extract_web_page_chunks(row: dict[str, str], url: str) -> list[dict]:
+    try:
+        with request_url(url, timeout=25) as response:
+            content_type = response.headers.get("Content-Type", "").lower()
+            if "text/html" not in content_type:
+                print(f"  skipped: unsupported webpage content type {content_type or 'unknown'}")
+                return []
+            html = response.read().decode("utf-8", errors="ignore")
+    except Exception as error:
+        print(f"  skipped: {type(error).__name__}: {error}")
+        return []
+
+    document = parse_web_document(url, html)
+    if len(document.text) < 300:
+        print("  skipped: webpage text too short after cleanup")
+        return []
+
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
+    records = []
+    for chunk_index, chunk in enumerate(chunk_text(document.text), start=1):
+        records.append(
+            {
+                "id": f"web-{digest}:c{chunk_index}",
+                "title": row.get("title", "") or document.title or url,
+                "source": row.get("source", ""),
+                "url": url,
+                "pdf_path": "",
+                "page": "web",
+                "chunk_index": chunk_index,
+                "text": chunk,
+            }
+        )
+    return records
+
+
+def build_embeddings(
+    query: str | None = None,
+    limit: int | None = None,
+    append: bool = False,
+    include_web: bool = True,
+) -> None:
     VECTOR_DIR.mkdir(parents=True, exist_ok=True)
     store = VectorStore(SQLITE_FILE)
     if not append:
@@ -83,13 +125,9 @@ def build_embeddings(query: str | None = None, limit: int | None = None, append:
         and row.get("priority", "").lower() != "exclude"
     ]
     if limit:
-        selected_rows = []
-        for row in pdf_rows:
-            if is_pdf_url(row["link"].strip()):
-                selected_rows.append(row)
-            if len(selected_rows) >= limit:
-                break
-        rows = selected_rows
+        rows = pdf_rows[:limit]
+    else:
+        rows = pdf_rows
 
     raw_records = []
     for row in rows:
@@ -98,34 +136,40 @@ def build_embeddings(query: str | None = None, limit: int | None = None, append:
             continue
 
         print(f"Checking source: {row.get('title', url)}")
-        if not is_pdf_url(url):
+        if is_pdf_url(url):
+            try:
+                pdf_path = download_pdf(url)
+                pages = extract_pdf_pages(pdf_path)
+            except Exception as error:
+                print(f"  skipped: {type(error).__name__}: {error}")
+                continue
+
+            record_count = 0
+            for page in pages:
+                for chunk_index, chunk in enumerate(chunk_text(str(page["text"])), start=1):
+                    raw_records.append(
+                        {
+                            "id": f"{pdf_path.stem}:p{page['page']}:c{chunk_index}",
+                            "title": row.get("title", ""),
+                            "source": row.get("source", ""),
+                            "url": url,
+                            "pdf_path": str(pdf_path),
+                            "page": page["page"],
+                            "chunk_index": chunk_index,
+                            "text": chunk,
+                        }
+                    )
+                    record_count += 1
+            print(f"  extracted {record_count} PDF chunks")
+            continue
+
+        if not include_web:
             print("  skipped: not a direct PDF")
             continue
 
-        try:
-            pdf_path = download_pdf(url)
-            pages = extract_pdf_pages(pdf_path)
-        except Exception as error:
-            print(f"  skipped: {type(error).__name__}: {error}")
-            continue
-
-        record_count = 0
-        for page in pages:
-            for chunk_index, chunk in enumerate(chunk_text(str(page["text"])), start=1):
-                raw_records.append(
-                    {
-                        "id": f"{pdf_path.stem}:p{page['page']}:c{chunk_index}",
-                        "title": row.get("title", ""),
-                        "source": row.get("source", ""),
-                        "url": url,
-                        "pdf_path": str(pdf_path),
-                        "page": page["page"],
-                        "chunk_index": chunk_index,
-                        "text": chunk,
-                    }
-                )
-                record_count += 1
-        print(f"  extracted {record_count} chunks")
+        web_records = extract_web_page_chunks(row, url)
+        raw_records.extend(web_records)
+        print(f"  extracted {len(web_records)} webpage chunks")
 
     records = []
     provider = get_provider()
@@ -183,13 +227,14 @@ def build_embeddings(query: str | None = None, limit: int | None = None, append:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build local embeddings for heritage PDF chunks.")
+    parser = argparse.ArgumentParser(description="Build local embeddings for heritage PDF and webpage chunks.")
     parser.add_argument("--query", help="Only embed sources matching this query.")
     parser.add_argument("--limit", type=int, help="Only inspect the first N matching sources.")
     parser.add_argument("--append", action="store_true", help="Append/update instead of rebuilding the DB.")
+    parser.add_argument("--pdf-only", action="store_true", help="Skip webpage text ingestion and embed only direct PDFs.")
     args = parser.parse_args()
 
-    build_embeddings(query=args.query, limit=args.limit, append=args.append)
+    build_embeddings(query=args.query, limit=args.limit, append=args.append, include_web=not args.pdf_only)
 
 
 if __name__ == "__main__":

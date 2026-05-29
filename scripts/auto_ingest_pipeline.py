@@ -46,7 +46,7 @@ def run_pipeline(
     )
     log(f"PDF discovery added {added} new candidate PDFs.")
 
-    log(f"Building/updating embeddings for up to {embed_limit} direct PDF sources.")
+    log(f"Building/updating embeddings for up to {embed_limit} PDF or webpage sources.")
     build_embeddings(limit=embed_limit, append=True)
 
     log("Auto-ingest pipeline finished.")

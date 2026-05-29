@@ -7,10 +7,8 @@ import json
 import re
 import ssl
 import sys
-from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
 
@@ -50,61 +48,6 @@ STOPWORDS = {
     "who",
     "why",
 }
-
-
-class LinkParser(HTMLParser):
-    def __init__(self, base_url: str) -> None:
-        super().__init__()
-        self.base_url = base_url
-        self.links: list[dict[str, str]] = []
-        self._current_href: str | None = None
-        self._current_text: list[str] = []
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag.lower() != "a":
-            return
-        attr_map = dict(attrs)
-        href = attr_map.get("href")
-        if href:
-            self._current_href = urljoin(self.base_url, href)
-            self._current_text = []
-
-    def handle_data(self, data: str) -> None:
-        if self._current_href:
-            self._current_text.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag.lower() == "a" and self._current_href:
-            self.links.append(
-                {
-                    "url": self._current_href,
-                    "text": " ".join(part.strip() for part in self._current_text if part.strip()),
-                }
-            )
-            self._current_href = None
-            self._current_text = []
-
-
-class TextParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self.parts: list[str] = []
-        self.skip_depth = 0
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag.lower() in {"script", "style", "noscript"}:
-            self.skip_depth += 1
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag.lower() in {"script", "style", "noscript"} and self.skip_depth:
-            self.skip_depth -= 1
-
-    def handle_data(self, data: str) -> None:
-        if not self.skip_depth and data.strip():
-            self.parts.append(data.strip())
-
-    def text(self) -> str:
-        return re.sub(r"\s+", " ", " ".join(self.parts)).strip()
 
 
 def tokenize(text: str) -> set[str]:
@@ -172,24 +115,23 @@ def is_pdf_url(url: str) -> bool:
 
 
 def discover_pdf_links(page_url: str, question: str, limit: int = 5) -> list[dict[str, str]]:
+    from web_ingestion import extract_pdf_links, parse_web_document
+
     try:
         with request_url(page_url, timeout=20) as response:
             html = response.read().decode("utf-8", errors="ignore")
     except Exception as error:
         return [{"url": page_url, "text": "", "error": f"{type(error).__name__}: {error}"}]
 
-    parser = LinkParser(page_url)
-    parser.feed(html)
+    document = parse_web_document(page_url, html)
     terms = tokenize(question)
     candidates = []
     seen = set()
-    for link in parser.links:
+    for link in extract_pdf_links(document):
         url = link["url"]
         if url in seen:
             continue
         seen.add(url)
-        if ".pdf" not in url.lower():
-            continue
         label = f"{link.get('text', '')} {url}"
         candidates.append({**link, "_score": score_text(terms, label)})
 
@@ -198,6 +140,8 @@ def discover_pdf_links(page_url: str, question: str, limit: int = 5) -> list[dic
 
 
 def extract_source_page(url: str, question: str, route: dict | None = None) -> dict[str, str | int] | None:
+    from web_ingestion import extract_relevant_text, parse_web_document
+
     try:
         with request_url(url, timeout=20) as response:
             content_type = response.headers.get("Content-Type", "").lower()
@@ -207,44 +151,17 @@ def extract_source_page(url: str, question: str, route: dict | None = None) -> d
     except Exception:
         return None
 
-    parser = TextParser()
-    parser.feed(html)
-    text = parser.text()
+    document = parse_web_document(url, html)
+    text = document.text
     if not text:
         return None
 
     required_terms = [term.lower() for term in (route or {}).get("required_terms", [])]
-    lowered = text.lower()
-    if required_terms and not any(term in lowered for term in required_terms):
-        return None
-    if required_terms:
-        snippets = []
-        for term in required_terms:
-            start = lowered.find(term)
-            while start != -1 and len(snippets) < 5:
-                left = max(0, start - 450)
-                right = min(len(text), start + len(term) + 650)
-                snippets.append(text[left:right])
-                start = lowered.find(term, start + len(term))
-        if snippets:
-            text = " ".join(snippets)
-
     terms = tokenize(question) | tokenize(" ".join((route or {}).get("boost_terms", [])))
-    sentences = re.split(r"(?<=[.!?])\s+", text)
-    scored = []
-    for sentence in sentences:
-        score = score_text(terms, sentence)
-        if score:
-            ascii_ratio = sum(1 for char in sentence if ord(char) < 128) / max(1, len(sentence))
-            if ascii_ratio < 0.85:
-                score -= 2
-            if any(marker in sentence.lower() for marker in ["criterion", "description", "kingdom", "reign"]):
-                score += 1
-            if score > 0:
-                scored.append((score, sentence))
-    scored.sort(key=lambda item: item[0], reverse=True)
-    excerpt = " ".join(sentence for _, sentence in scored[:8]) if scored else text[:2500]
-    return {"page": "web", "text": excerpt[:3500]}
+    excerpt = extract_relevant_text(document, terms=terms, required_terms=required_terms)
+    if not excerpt:
+        return None
+    return {"page": "web", "text": excerpt}
 
 
 def download_pdf(url: str) -> Path:

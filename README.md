@@ -242,7 +242,7 @@ data/brain/last_brain_response.json
 
 ## Build Embeddings
 
-Build a local vector store from direct PDF links in `metadata/heritage_links.csv`:
+Build a local vector store from PDF and webpage links in `metadata/heritage_links.csv`:
 
 ```bash
 run_build_embeddings.bat --query "Hampi"
@@ -273,7 +273,15 @@ source diversity
 
 Search output shows the rerank reason for each hit.
 
-After the vector store exists, `run_agent.bat` will use embedding search first. If no vector store exists, it falls back to the older PDF search/extract flow.
+Webpage ingestion extracts cleaner text from titles, descriptions, headings, paragraphs, lists, table cells, and captions while filtering common boilerplate such as cookie/privacy/footer text. Direct PDF links are still downloaded and extracted page by page.
+
+To keep the older PDF-only behavior:
+
+```bash
+run_build_embeddings.bat --pdf-only --limit 10
+```
+
+After the vector store exists, `run_agent.bat` will use embedding search first. If no vector store exists, it falls back to webpage/PDF search and extraction.
 
 ## Question Router
 
@@ -455,7 +463,7 @@ It performs:
 validate pending/stale links
 -> discover PDF links from verified source pages
 -> add discovered PDFs to heritage_links.csv
--> download/extract direct PDFs
+-> download/extract direct PDFs and ingest source webpages
 -> update the SQLite vector database
 ```
 

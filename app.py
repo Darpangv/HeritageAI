@@ -504,7 +504,7 @@ with tabs[6]:
         if st.button("Search Memory") and question:
             result = run_script(["scripts/search_embeddings.py", question, "--top-k", str(top_k)])
             show_result(result)
-            st.caption("Search results use auto-reranking: semantic score + source quality + keyword match + document category fit + source diversity.")
+            st.caption("Search results use webpage/PDF ingestion plus auto-reranking: semantic score + source quality + keyword match + document category fit + source diversity.")
 
 with tabs[7]:
     st.subheader("Recent Logs")
