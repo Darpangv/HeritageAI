@@ -35,6 +35,12 @@ PUBLIC_HERITAGE_MAPS = {
             "- [S1] UNESCO Buddhist Monuments at Sanchi: https://whc.unesco.org/en/list/524/",
             "- [S2] OpenStreetMap Sanchi map view: https://www.openstreetmap.org/#map=15/23.4793/77.7390",
         ],
+        "research_sources": [
+            "- [S1] UNESCO Buddhist Monuments at Sanchi: https://whc.unesco.org/en/list/524/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Sanchi basemap reference: https://www.openstreetmap.org/#map=15/23.4793/77.7390",
+        ],
     },
     "nalanda": {
         "name": "Archaeological Site of Nalanda Mahavihara",
@@ -46,6 +52,12 @@ PUBLIC_HERITAGE_MAPS = {
         "sources": [
             "- [S1] UNESCO Archaeological Site of Nalanda Mahavihara: https://whc.unesco.org/en/list/1502/",
             "- [S2] OpenStreetMap Nalanda map view: https://www.openstreetmap.org/#map=15/25.1367/85.4430",
+        ],
+        "research_sources": [
+            "- [S1] UNESCO Archaeological Site of Nalanda Mahavihara: https://whc.unesco.org/en/list/1502/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Nalanda basemap reference: https://www.openstreetmap.org/#map=15/25.1367/85.4430",
         ],
     },
     "mahabalipuram": {
@@ -59,6 +71,12 @@ PUBLIC_HERITAGE_MAPS = {
             "- [S1] UNESCO Group of Monuments at Mahabalipuram: https://whc.unesco.org/en/list/249/",
             "- [S2] OpenStreetMap Mahabalipuram map view: https://www.openstreetmap.org/#map=15/12.6167/80.1917",
         ],
+        "research_sources": [
+            "- [S1] UNESCO Group of Monuments at Mahabalipuram: https://whc.unesco.org/en/list/249/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Mahabalipuram basemap reference: https://www.openstreetmap.org/#map=15/12.6167/80.1917",
+        ],
     },
     "pattadakal": {
         "name": "Group of Monuments at Pattadakal",
@@ -70,6 +88,12 @@ PUBLIC_HERITAGE_MAPS = {
         "sources": [
             "- [S1] UNESCO Group of Monuments at Pattadakal: https://whc.unesco.org/en/list/239/",
             "- [S2] OpenStreetMap Pattadakal map view: https://www.openstreetmap.org/#map=15/15.9486/75.8167",
+        ],
+        "research_sources": [
+            "- [S1] UNESCO Group of Monuments at Pattadakal: https://whc.unesco.org/en/list/239/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Pattadakal basemap reference: https://www.openstreetmap.org/#map=15/15.9486/75.8167",
         ],
     },
     "ellora": {
@@ -83,6 +107,12 @@ PUBLIC_HERITAGE_MAPS = {
             "- [S1] UNESCO Ellora Caves: https://whc.unesco.org/en/list/243/",
             "- [S2] OpenStreetMap Ellora map view: https://www.openstreetmap.org/#map=15/20.0258/75.1792",
         ],
+        "research_sources": [
+            "- [S1] UNESCO Ellora Caves: https://whc.unesco.org/en/list/243/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Ellora basemap reference: https://www.openstreetmap.org/#map=15/20.0258/75.1792",
+        ],
     },
     "taj_mahal": {
         "name": "Taj Mahal",
@@ -94,6 +124,12 @@ PUBLIC_HERITAGE_MAPS = {
         "sources": [
             "- [S1] UNESCO Taj Mahal: https://whc.unesco.org/en/list/252/",
             "- [S2] OpenStreetMap Taj Mahal map view: https://www.openstreetmap.org/#map=16/27.1751/78.0421",
+        ],
+        "research_sources": [
+            "- [S1] UNESCO Taj Mahal: https://whc.unesco.org/en/list/252/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Taj Mahal basemap reference: https://www.openstreetmap.org/#map=16/27.1751/78.0421",
         ],
     },
     "agra_fort": {
@@ -107,6 +143,12 @@ PUBLIC_HERITAGE_MAPS = {
             "- [S1] UNESCO Agra Fort: https://whc.unesco.org/en/list/251/",
             "- [S2] OpenStreetMap Agra Fort map view: https://www.openstreetmap.org/#map=16/27.1795/78.0211",
         ],
+        "research_sources": [
+            "- [S1] UNESCO Agra Fort: https://whc.unesco.org/en/list/251/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Agra Fort basemap reference: https://www.openstreetmap.org/#map=16/27.1795/78.0211",
+        ],
     },
     "fatehpur_sikri": {
         "name": "Fatehpur Sikri",
@@ -119,6 +161,12 @@ PUBLIC_HERITAGE_MAPS = {
             "- [S1] UNESCO Fatehpur Sikri: https://whc.unesco.org/en/list/255/",
             "- [S2] OpenStreetMap Fatehpur Sikri map view: https://www.openstreetmap.org/#map=15/27.0945/77.6679",
         ],
+        "research_sources": [
+            "- [S1] UNESCO Fatehpur Sikri: https://whc.unesco.org/en/list/255/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Fatehpur Sikri basemap reference: https://www.openstreetmap.org/#map=15/27.0945/77.6679",
+        ],
     },
     "ramappa": {
         "name": "Kakatiya Rudreshwara Ramappa Temple",
@@ -130,6 +178,12 @@ PUBLIC_HERITAGE_MAPS = {
         "sources": [
             "- [S1] UNESCO Kakatiya Rudreshwara Ramappa Temple: https://whc.unesco.org/en/list/1570/",
             "- [S2] OpenStreetMap Ramappa Temple map view: https://www.openstreetmap.org/#map=15/18.2593/79.9436",
+        ],
+        "research_sources": [
+            "- [S1] UNESCO Kakatiya Rudreshwara Ramappa Temple: https://whc.unesco.org/en/list/1570/",
+            "- [S2] Bhuvan Indian Geo-Platform: https://bhuvan.nrsc.gov.in/",
+            "- [S3] Bhoonidhi Indian Earth Observation Data Hub: https://bhoonidhi.nrsc.gov.in/bhoonidhi/",
+            "- [S4] OpenStreetMap Ramappa Temple basemap reference: https://www.openstreetmap.org/#map=15/18.2593/79.9436",
         ],
     },
 }
@@ -160,6 +214,20 @@ def embed_url(config: dict) -> str:
     )
 
 
+def research_map_config(site_id: str) -> dict | None:
+    config = PUBLIC_HERITAGE_MAPS.get(site_id)
+    if not config:
+        return None
+    return {
+        "id": site_id,
+        "name": config["name"],
+        "lat": config["lat"],
+        "lon": config["lon"],
+        "zoom": config["zoom"],
+        "study_radius_m": int(max(900, min(6000, float(config["delta"]) * 111000))),
+    }
+
+
 def answer_map_view(question: str, route: dict) -> tuple[str, list[str]] | None:
     if route.get("answer_mode") not in {"map_view", "research_map_view"}:
         return None
@@ -178,12 +246,12 @@ def answer_map_view(question: str, route: dict) -> tuple[str, list[str]] | None:
             [
                 f"Here is a research-oriented archaeology map workspace for {config['name']}.",
                 "",
-                "The embedded map uses satellite/topographic basemap options plus a site-area overlay. Use the research links below for authoritative GIS/satellite layers, published archaeological interpretation, and official heritage context.",
+                "The embedded map uses satellite/topographic basemap options plus a site-area overlay. Use the research links below for authoritative GIS/satellite layers, published archaeological interpretation where available, and official heritage context.",
                 "",
                 "Research layer checklist:",
                 "1. Satellite imagery: Bhuvan/NRSC or Bhoonidhi for Indian earth observation data.",
                 "2. Official heritage boundary/context: UNESCO and ASI records where available.",
-                "3. Published archaeology/GIS interpretation: Hampi sacred landscape and digital archaeology papers.",
+                "3. Published archaeology/GIS interpretation where available for the site.",
                 "4. Public basemap reference: OpenStreetMap for roads, settlements, and orientation only.",
                 "",
                 "Map caution: this is for lawful research and education. Do not use it for excavation, artifact removal, trespass, or exposing vulnerable site details.",

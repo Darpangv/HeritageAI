@@ -11,6 +11,12 @@ import streamlit.components.v1 as components
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+SCRIPT_DIR = PROJECT_ROOT / "scripts"
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from map_views import research_map_config  # noqa: E402
+
 LAST_ANSWER = PROJECT_ROOT / "data" / "extracted" / "last_answer.md"
 MAP_EMBED_RE = re.compile(r"<!--MAP_EMBED_URL:(.*?)-->")
 RESEARCH_MAP_RE = re.compile(r"<!--RESEARCH_MAP_SITE:(.*?)-->")
@@ -92,15 +98,7 @@ def clear_memory(session_id: str) -> str:
 
 
 def research_map_html(site_id: str) -> str:
-    maps = {
-        "hampi": {
-            "name": "Hampi World Heritage Area",
-            "lat": 15.3350,
-            "lon": 76.4600,
-            "zoom": 14,
-        }
-    }
-    site = maps.get(site_id, maps["hampi"])
+    site = research_map_config(site_id) or research_map_config("hampi")
     return f"""
     <!doctype html>
     <html>
@@ -144,7 +142,7 @@ def research_map_html(site_id: str) -> str:
 
         const marker = L.marker([{site["lat"]}, {site["lon"]}]).bindPopup('{site["name"]}');
         const studyArea = L.circle([{site["lat"]}, {site["lon"]}], {{
-          radius: 4200,
+          radius: {site["study_radius_m"]},
           color: '#b3261e',
           fillColor: '#ffcc00',
           fillOpacity: 0.12,
