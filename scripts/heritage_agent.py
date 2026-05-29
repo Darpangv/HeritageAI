@@ -316,6 +316,7 @@ def answer_question(
 ) -> None:
     EXTRACT_DIR.mkdir(parents=True, exist_ok=True)
     from accessibility_policy import is_restricted_archaeology_request, restricted_response
+    from map_views import answer_map_view
     from question_router import expand_question, format_route, inventory_answer, route_question, source_list_answer
     from site_lists import answer_site_list
     memory_context = ""
@@ -348,6 +349,13 @@ def answer_question(
     if route.get("answer_mode") == "source_list":
         answer = source_list_answer(question, route)
         result_text = append_sources(answer, ["- [S1] metadata/heritage_links.csv"])
+        save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
+        return
+
+    map_view_result = answer_map_view(question, route)
+    if map_view_result:
+        answer, source_lines = map_view_result
+        result_text = append_sources(answer, source_lines)
         save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
         return
 

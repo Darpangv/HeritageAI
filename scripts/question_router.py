@@ -193,6 +193,12 @@ def route_question(question: str) -> dict:
         route["answer_mode"] = "source_list"
         route["reason"] = f"{route['reason']}; question asks for source links/list"
 
+    if route["intent"] == "gis_satellite" and _contains(text, ("hampi", "vijayanagara", "vijayanagar")) and _contains(text, ("map", "show", "open", "view")):
+        route["answer_mode"] = "map_view"
+        route["site"] = "hampi"
+        route["required_terms"] = ["hampi", "vijayanagara", "vijayanagar"]
+        route["reason"] = f"{route['reason']}; question asks to display a map view"
+
     return route
 
 

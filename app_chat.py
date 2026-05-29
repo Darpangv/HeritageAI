@@ -3,13 +3,16 @@ from __future__ import annotations
 import subprocess
 import sys
 import uuid
+import re
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 LAST_ANSWER = PROJECT_ROOT / "data" / "extracted" / "last_answer.md"
+MAP_EMBED_RE = re.compile(r"<!--MAP_EMBED_URL:(.*?)-->")
 
 
 st.set_page_config(
@@ -87,6 +90,27 @@ def clear_memory(session_id: str) -> str:
     return "\n".join(part for part in [result.stdout, result.stderr] if part.strip())
 
 
+def render_answer(answer: str) -> None:
+    match = MAP_EMBED_RE.search(answer)
+    cleaned_answer = MAP_EMBED_RE.sub("", answer).strip()
+    st.markdown(cleaned_answer)
+    if match:
+        embed_url = match.group(1).strip()
+        components.html(
+            f"""
+            <iframe
+              title="Interactive heritage map"
+              src="{embed_url}"
+              width="100%"
+              height="460"
+              style="border:1px solid #c9c9c9; border-radius:8px;"
+              loading="lazy">
+            </iframe>
+            """,
+            height=480,
+        )
+
+
 st.title("Indian Heritage AI Chat")
 st.caption("Local RAG chat with question routing, conversation memory, citations, source links, and archaeology safety rules.")
 
@@ -118,7 +142,10 @@ if st.session_state.get("memory_notice"):
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        if message["role"] == "assistant":
+            render_answer(message["content"])
+        else:
+            st.markdown(message["content"])
         if show_debug and message.get("debug"):
             with st.expander("Route and retrieval output"):
                 st.code(message["debug"][-6000:], language="text")
@@ -137,7 +164,7 @@ if question:
                 session_id=st.session_state.session_id,
                 memory_enabled=memory_enabled,
             )
-        st.markdown(answer)
+        render_answer(answer)
         if show_debug:
             with st.expander("Route and retrieval output"):
                 st.code(debug[-6000:], language="text")
