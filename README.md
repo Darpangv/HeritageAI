@@ -1,5 +1,7 @@
 # Indian Heritage AI
 
+Explore Indian heritage with AI. Search, learn, and discover history, archaeology, architecture, and cultural knowledge from trusted sources.
+
 Starter MVP for an AI + Heritage research and storytelling agent.
 
 The first version focuses on building a reliable source database before adding RAG, embeddings, or chatbot logic.
