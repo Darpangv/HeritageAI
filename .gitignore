@@ -1,0 +1,27 @@
+# Secrets and local credentials
+.env
+*.env
+data/config/
+data/brain/
+
+# Runtime artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.streamlit/secrets.toml
+
+# Logs
+*.log
+data/logs/
+
+# Downloaded/generated data
+data/pdfs/
+data/extracted/
+data/vector_store/
+metadata/backups/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

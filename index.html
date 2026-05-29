@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Indian Heritage AI</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #61707d;
+      --line: #d9e0e6;
+      --surface: #f6f8f3;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --accent-2: #8a4b21;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--surface);
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--accent);
+      font-weight: 700;
+      white-space: nowrap;
+      background: #f2fbf8;
+    }
+
+    main {
+      padding: 22px 0 36px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    .metric strong {
+      font-size: 1.8rem;
+      letter-spacing: 0;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: var(--panel);
+      font: inherit;
+    }
+
+    .table-shell {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.92rem;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #eef4f1;
+      color: #26343b;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    a {
+      color: var(--accent);
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .status {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 0.78rem;
+      font-weight: 750;
+      color: var(--accent-2);
+      background: #fff7ed;
+    }
+
+    @media (max-width: 760px) {
+      .topbar,
+      .controls {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .badge {
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap topbar">
+      <div>
+        <h1>Indian Heritage AI</h1>
+        <p class="subtitle">Curated source database for a heritage research and storytelling agent.</p>
+      </div>
+      <div class="badge">MVP source layer</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="metrics" aria-label="Dataset metrics">
+      <div class="metric"><span>Total sources</span><strong id="total">0</strong></div>
+      <div class="metric"><span>Visible sources</span><strong id="visible">0</strong></div>
+      <div class="metric"><span>Verified</span><strong id="verified">0</strong></div>
+      <div class="metric"><span>Pending</span><strong id="pending">0</strong></div>
+    </section>
+
+    <section class="controls" aria-label="Filters">
+      <input id="search" type="search" placeholder="Search ASI, Hampi, archive, GIS, manuscripts...">
+      <select id="status">
+        <option value="">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="verified">Verified</option>
+        <option value="redirect">Redirect</option>
+        <option value="pdf">PDF</option>
+        <option value="broken">Broken</option>
+      </select>
+    </section>
+
+    <section class="table-shell" aria-label="Heritage source table">
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Region</th>
+            <th>Source</th>
+            <th>Status</th>
+            <th>Link</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const sources = [
+      ["Archaeological Survey of India", "Government Archive", "India", "ASI", "https://asi.nic.in/", "verified", "High-value official source"],
+      ["ASI Excavation Reports", "Archaeology", "India", "ASI", "https://asi.nic.in/pages/Publications/excavationReports", "verified", "May redirect if ASI changes site structure"],
+      ["ASI Indian Archaeology Reports", "Archaeology", "India", "ASI", "https://asi.nic.in/pages/Publications/indianArchaeology", "verified", "Annual archaeology reports"],
+      ["ASI Archive", "Archive", "India", "ASI", "https://asi.nic.in/pages/archive", "pending", "Official archive page"],
+      ["National Archives of India", "Archive", "India", "Government of India", "https://nationalarchives.nic.in", "pending", "Official archive source"],
+      ["Abhilekh-Patal Archive", "Archive", "India", "Government of India", "http://www.abhilekh-patal.in", "pending", "National Archives digital portal"],
+      ["National Museum Repository", "Museum", "India", "Government of India", "https://museumsofindia.gov.in/repository/home", "pending", "Museum collections repository"],
+      ["IGNCA Main Portal", "Cultural Heritage", "India", "IGNCA", "https://ignca.gov.in", "pending", "Cultural heritage institution"],
+      ["IGNCA Digital Resources", "Cultural Heritage", "India", "IGNCA", "https://ignca.gov.in/divisionss/janapada-sampada-division/digital-resources/", "pending", "Digital resource page"],
+      ["IGNCA Kalasampada", "Cultural Heritage", "India", "IGNCA", "https://www.ignca.gov.in/divisionss/janapada-sampada-division/kalasampada/", "pending", "Digital cultural archive"],
+      ["Internet Archive", "Books", "Global", "Archive.org", "https://archive.org", "pending", "Public-domain and scanned books"],
+      ["Digital Library of India", "Books", "India", "Archive.org", "https://archive.org/details/digitallibraryindia", "pending", "Indian book collection"],
+      ["UNESCO World Heritage", "Heritage", "Global", "UNESCO", "https://whc.unesco.org", "pending", "Global heritage source"],
+      ["UNESCO Publications", "Heritage Publications", "Global", "UNESCO", "https://whc.unesco.org/en/publications/", "pending", "World heritage publications"],
+      ["Vijayanagara Research Project", "Vijayanagara", "Karnataka", "Vijayanagara Project", "http://www.vijayanagara.org", "pending", "Research site for Hampi/Vijayanagara"],
+      ["Vijayanagara Maps", "Maps", "Karnataka", "Vijayanagara Project", "http://www.vijayanagara.org/maps.asp", "pending", "Historical and site maps"],
+      ["Vijayanagara Monument Database", "Monuments", "Karnataka", "Vijayanagara Project", "http://www.vijayanagara.org/monuments.asp", "pending", "Monument reference database"],
+      ["Center for Art and Archaeology", "Temple Architecture", "India", "AIIS", "https://www.caa-india.org", "pending", "Temple architecture and photo archive"],
+      ["Muktabodha Digital Library", "Manuscripts", "India", "Muktabodha", "https://muktalib5.org", "pending", "Manuscript digital library"],
+      ["Digital South Asia Library", "Historical Resources", "South Asia", "University of Chicago", "https://dsal.uchicago.edu", "pending", "South Asian reference source"],
+      ["INTACH", "Heritage Conservation", "India", "INTACH", "https://intach.org", "pending", "Conservation organization"],
+      ["Open Government Data India", "Government Data", "India", "Data.gov.in", "https://data.gov.in", "pending", "Government datasets"],
+      ["ISRO Bhuvan", "GIS", "India", "ISRO", "https://bhuvan.nrsc.gov.in", "pending", "GIS and geospatial portal"],
+      ["OpenStreetMap", "GIS", "Global", "OSM", "https://www.openstreetmap.org", "pending", "Map data source"],
+      ["Google Scholar", "Research Papers", "Global", "Google", "https://scholar.google.com", "pending", "Research discovery only"],
+      ["arXiv", "Research Papers", "Global", "arXiv", "https://arxiv.org", "pending", "Open research papers"],
+      ["Project Gutenberg", "Public Domain Books", "Global", "Gutenberg", "https://www.gutenberg.org", "pending", "Public domain books"],
+      ["Gandhi Heritage Portal", "Archive", "India", "Gandhi Heritage Portal", "https://www.gandhiheritageportal.org", "pending", "Gandhian history archive"],
+      ["Panjab Digital Library", "Manuscripts", "India", "PDL", "https://www.panjabdigilib.org", "pending", "Punjabi and Sikh heritage archive"],
+      ["KASTURI Heritage Mapping", "GIS", "Karnataka", "NIAS", "https://kasturi.nias.res.in", "pending", "Karnataka heritage mapping"],
+      ["UNESCO Hampi World Heritage Document", "Heritage PDF", "Karnataka", "UNESCO", "https://whc.unesco.org/document/198203", "pending", "Direct PDF test source for the question-to-PDF pipeline"]
+    ];
+
+    const rowsEl = document.querySelector("#rows");
+    const searchEl = document.querySelector("#search");
+    const statusEl = document.querySelector("#status");
+
+    function render() {
+      const query = searchEl.value.trim().toLowerCase();
+      const status = statusEl.value;
+      const filtered = sources.filter((item) => {
+        const haystack = item.join(" ").toLowerCase();
+        return (!query || haystack.includes(query)) && (!status || item[5] === status);
+      });
+
+      rowsEl.innerHTML = filtered.map((item) => `
+        <tr>
+          <td>${item[0]}</td>
+          <td>${item[1]}</td>
+          <td>${item[2]}</td>
+          <td>${item[3]}</td>
+          <td><span class="status">${item[5]}</span></td>
+          <td><a href="${item[4]}" target="_blank" rel="noreferrer">${item[4]}</a></td>
+          <td>${item[6]}</td>
+        </tr>
+      `).join("");
+
+      document.querySelector("#total").textContent = sources.length;
+      document.querySelector("#visible").textContent = filtered.length;
+      document.querySelector("#verified").textContent = sources.filter((item) => item[5] === "verified" || item[5] === "pdf").length;
+      document.querySelector("#pending").textContent = sources.filter((item) => item[5] === "pending").length;
+    }
+
+    searchEl.addEventListener("input", render);
+    statusEl.addEventListener("change", render);
+    render();
+  </script>
+</body>
+</html>
