@@ -310,6 +310,8 @@ The route influences document-category preference, reranking, and CSV/PDF fallba
 
 If a routed question asks for source links, for example GIS/satellite links, the agent returns a ranked source list directly from the CSV instead of forcing a PDF/vector answer.
 
+For site feature questions such as `list out Hampi temples`, the router returns a direct monument list instead of confusing the word `list` with a request for source URLs. Source-link mode is still available when the question explicitly asks for links or sources.
+
 Inspect a route without running the full agent:
 
 ```bash

@@ -182,7 +182,14 @@ def route_question(question: str) -> dict:
             }
         )
 
-    if route["intent"] != "general_heritage" and _contains(text, ("source", "sources", "link", "links", "list", "show", "find")):
+    if route["intent"] == "site_monument" and _contains(text, ("hampi", "vijayanagara", "vijayanagar")) and _contains(text, ("list", "list out", "show")):
+        route["answer_mode"] = "site_list"
+        route["site"] = "hampi"
+        route["required_terms"] = ["hampi", "vijayanagara", "vijayanagar"]
+        route["reason"] = f"{route['reason']}; question asks for a site feature list"
+
+    source_request_terms = ("source", "sources", "link", "links", "references", "urls")
+    if route["intent"] != "general_heritage" and _contains(text, source_request_terms):
         route["answer_mode"] = "source_list"
         route["reason"] = f"{route['reason']}; question asks for source links/list"
 
