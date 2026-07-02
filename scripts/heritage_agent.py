@@ -316,6 +316,7 @@ def answer_question(
 ) -> None:
     EXTRACT_DIR.mkdir(parents=True, exist_ok=True)
     from accessibility_policy import is_restricted_archaeology_request, restricted_response
+    from knowledge_packs import answer_knowledge_pack
     from map_views import answer_map_view
     from question_router import expand_question, format_route, inventory_answer, route_question, source_list_answer
     from site_lists import answer_site_list
@@ -352,6 +353,13 @@ def answer_question(
         save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
         return
 
+    knowledge_pack_result = answer_knowledge_pack(question, route)
+    if knowledge_pack_result:
+        answer, source_lines = knowledge_pack_result
+        result_text = append_sources(answer, source_lines)
+        save_answer(question, result_text, session_id, memory_enabled, route_text=route_text)
+        return
+
     map_view_result = answer_map_view(question, route)
     if map_view_result:
         answer, source_lines = map_view_result
@@ -367,6 +375,7 @@ def answer_question(
         return
 
     try:
+        from evidence_filter import filter_embedding_hits
         from search_embeddings import search_embeddings
 
         embedding_hits = search_embeddings(question, top_k=page_limit, route=route)
@@ -374,13 +383,7 @@ def answer_question(
         embedding_hits = []
 
     if embedding_hits:
-        required_terms = [term.lower() for term in route.get("required_terms", [])]
-        if required_terms:
-            embedding_hits = [
-                hit
-                for hit in embedding_hits
-                if any(term in f"{hit.get('title', '')} {hit.get('text', '')}".lower() for term in required_terms)
-            ]
+        embedding_hits = filter_embedding_hits(embedding_hits, route=route)
 
     if embedding_hits:
         print("Reranked embedding matches:")

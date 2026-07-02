@@ -10,6 +10,7 @@ PROJECT_ROOT = SCRIPT_DIR.parents[0]
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from vector_db import SQLITE_FILE, VectorStore  # noqa: E402
+from evidence_filter import filter_embedding_hits  # noqa: E402
 from question_router import expand_question, format_route, route_question  # noqa: E402
 
 
@@ -26,7 +27,8 @@ def search_embeddings(question: str, top_k: int = 5, route: dict | None = None) 
     retrieval_question = expand_question(question, route)
     store = VectorStore(SQLITE_FILE)
     try:
-        return store.search(retrieval_question, top_k=top_k, route=route)
+        hits = store.search(retrieval_question, top_k=max(top_k * 3, top_k), route=route)
+        return filter_embedding_hits(hits, route=route)[:top_k]
     finally:
         store.close()
 

@@ -9,6 +9,7 @@ data/conversation_memory/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.venv/
 .streamlit/secrets.toml
 
 # Logs

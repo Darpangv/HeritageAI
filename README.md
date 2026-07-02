@@ -446,6 +446,14 @@ Open:
 http://localhost:8502
 ```
 
+If the browser says the site cannot be reached, the Streamlit server is not running on port `8502`. Install dependencies into the local virtual environment with:
+
+```bash
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Then run `run_chat_ui.bat` again. The launcher automatically uses `.venv\Scripts\python.exe` when it exists.
+
 The chat UI does not show admin controls, logs, validation buttons, or source-management actions. It uses the same local agent pipeline as `run_agent.bat`, including question routing, conversation memory, RAG citations, source links, accessibility rules, and archaeology safety constraints.
 
 ## Conversation Memory

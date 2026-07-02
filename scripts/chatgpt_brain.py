@@ -90,11 +90,9 @@ def ask_chatgpt(
 ) -> str:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        return (
-            "OPENAI_API_KEY is not set, so the ChatGPT brain is not connected yet.\n\n"
-            "Retrieved context:\n\n"
-            f"{context}"
-        )
+        from local_answer import local_source_answer
+
+        return local_source_answer(question=question, context=context, sources=sources)
 
     selected_model = model or os.environ.get("HERITAGE_CHAT_MODEL") or os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
     source_text = "\n".join(f"- {source}" for source in (sources or []))
