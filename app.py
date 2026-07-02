@@ -67,7 +67,16 @@ require_login()
 def load_links() -> pd.DataFrame:
     with CSV_FILE.open(newline="", encoding="utf-8") as file:
         rows = list(csv.DictReader(file))
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    for column in ["is_new", "added_at", "discovered_from"]:
+        if column not in df.columns:
+            df[column] = ""
+    if not df.empty:
+        df["_new_rank"] = df["is_new"].fillna("").astype(str).str.lower().eq("yes").astype(int)
+        df["_added_rank"] = pd.to_datetime(df["added_at"], errors="coerce", utc=True)
+        df = df.sort_values(["_new_rank", "_added_rank"], ascending=[False, False], na_position="last")
+        df = df.drop(columns=["_new_rank", "_added_rank"])
+    return df
 
 
 @st.cache_data
@@ -169,6 +178,7 @@ def filtered_links(df: pd.DataFrame) -> pd.DataFrame:
         source_types = st.multiselect("Source type", options("source_type"))
         document_categories = st.multiselect("Document category", options("document_category"))
         usable = st.multiselect("Usable for RAG", options("usable_for_rag"))
+        new_only = st.checkbox("New sources only")
 
     filtered = df.copy()
     if query:
@@ -198,6 +208,9 @@ def filtered_links(df: pd.DataFrame) -> pd.DataFrame:
         if selected and column in filtered.columns:
             filtered = filtered[filtered[column].isin(selected)]
 
+    if new_only and "is_new" in filtered.columns:
+        filtered = filtered[filtered["is_new"].fillna("").astype(str).str.lower() == "yes"]
+
     return filtered
 
 
@@ -217,6 +230,7 @@ status_counts = counter_for(df, "status")
 quality_counts = counter_for(df, "usable_for_rag")
 priority_counts = counter_for(df, "priority")
 document_category_counts = counter_for(df, "document_category")
+new_count = int((df["is_new"].fillna("").astype(str).str.lower() == "yes").sum()) if "is_new" in df.columns else 0
 
 gis_terms = "gis|map|mapping|geospatial|satellite|remote sensing|earth observation|bhuvan|bhoonidhi|vedas|mosdac|nrsc|isro|earthdata|copernicus|opentopography|sentinel|landsat|uav"
 gis_scan_columns = [column for column in ["title", "category", "source", "link", "notes", "source_type"] if column in df.columns]
@@ -227,7 +241,7 @@ gis_mask = df[gis_scan_columns].fillna("").astype(str).agg(" ".join, axis=1).str
 )
 gis_count = int(gis_mask.sum())
 
-metric_cols = st.columns(8)
+metric_cols = st.columns(9)
 metric_cols[0].metric("Links", len(df))
 metric_cols[1].metric("Visible", len(filtered))
 metric_cols[2].metric("Pending", status_counts.get("pending", 0))
@@ -235,7 +249,8 @@ metric_cols[3].metric("Verified/PDF", status_counts.get("verified", 0) + status_
 metric_cols[4].metric("Usable RAG", quality_counts.get("yes", 0))
 metric_cols[5].metric("GIS/Sat", gis_count)
 metric_cols[6].metric("Doc Categories", len(document_category_counts))
-metric_cols[7].metric("Vector Chunks", vector_stats["chunks"])
+metric_cols[7].metric("New", new_count)
+metric_cols[8].metric("Vector Chunks", vector_stats["chunks"])
 
 tabs = st.tabs(["Overview", "Links", "Categories", "GIS/Satellite", "Rules", "Actions", "Vector DB", "Logs", "Admin"])
 
@@ -257,12 +272,39 @@ with tabs[0]:
         category_df = category_df.sort_values("count", ascending=False)
         st.bar_chart(category_df, x="document_category", y="count")
 
+    if new_count:
+        st.subheader("New Sources")
+        new_df = df[df["is_new"].fillna("").astype(str).str.lower() == "yes"].head(25)
+        new_columns = [
+            column
+            for column in [
+                "is_new",
+                "added_at",
+                "title",
+                "source",
+                "category",
+                "document_category",
+                "status",
+                "link",
+                "discovered_from",
+            ]
+            if column in new_df.columns
+        ]
+        st.dataframe(
+            new_df[new_columns],
+            use_container_width=True,
+            hide_index=True,
+            column_config={"link": st.column_config.LinkColumn("link")},
+        )
+
 with tabs[1]:
     st.subheader("Source Database")
     display_columns = [
         column
         for column in [
             "title",
+            "is_new",
+            "added_at",
             "category",
             "region",
             "source",
@@ -278,6 +320,7 @@ with tabs[1]:
             "replacement_link",
             "replacement_status",
             "replacement_checked",
+            "discovered_from",
             "link",
             "notes",
         ]
@@ -441,6 +484,17 @@ with tabs[5]:
                         str(source_limit),
                         "--pdf-limit-per-source",
                         str(pdf_limit),
+                    ]
+                )
+            )
+        new_source_limit = st.number_input("New links per source", min_value=1, max_value=100, value=10)
+        if st.button("Discover New Online Sources"):
+            show_result(
+                run_script(
+                    [
+                        "scripts/discover_new_sources.py",
+                        "--per-seed-limit",
+                        str(new_source_limit),
                     ]
                 )
             )

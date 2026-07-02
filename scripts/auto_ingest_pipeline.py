@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from build_embeddings import build_embeddings
+from discover_new_sources import discover_new_sources
 from discover_pdfs import discover_pdfs
 from validate_links import validate_links
 
@@ -32,8 +33,13 @@ def run_pipeline(
     pdf_limit_per_source: int,
     embed_limit: int,
     include_pending_sources: bool,
+    discover_new_limit: int,
 ) -> None:
     log("Auto-ingest pipeline started.")
+
+    log(f"Discovering new online ASI/heritage sources, up to {discover_new_limit} per seed.")
+    new_added = discover_new_sources(seed_file=None, per_seed_limit=discover_new_limit, include_external=False)
+    log(f"New online source discovery added {new_added} links.")
 
     log(f"Validating up to {validate_limit} pending/stale links.")
     validate_links(limit=validate_limit, mode="stale", stale_days=30)
@@ -59,6 +65,7 @@ def main() -> None:
     parser.add_argument("--pdf-limit-per-source", type=int, default=5)
     parser.add_argument("--embed-limit", type=int, default=10)
     parser.add_argument("--include-pending-sources", action="store_true")
+    parser.add_argument("--discover-new-limit", type=int, default=10)
     args = parser.parse_args()
 
     run_pipeline(
@@ -67,6 +74,7 @@ def main() -> None:
         pdf_limit_per_source=args.pdf_limit_per_source,
         embed_limit=args.embed_limit,
         include_pending_sources=args.include_pending_sources,
+        discover_new_limit=args.discover_new_limit,
     )
 
 

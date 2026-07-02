@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from document_categories import DOCUMENT_CATEGORY_COLUMNS, classify_document_category
 from csv_backup import write_csv_with_backup
+from source_metadata import NEW_SOURCE_COLUMNS, mark_new_source
 from source_quality import QUALITY_COLUMNS, quality_for
 
 
@@ -26,6 +27,7 @@ COLUMNS = [
     "notes",
     *QUALITY_COLUMNS,
     *DOCUMENT_CATEGORY_COLUMNS,
+    *NEW_SOURCE_COLUMNS,
 ]
 
 
@@ -99,7 +101,8 @@ def add_link(
     }
     new_row.update(quality_for(new_row))
     new_row.update(classify_document_category(new_row))
-    rows.append(new_row)
+    mark_new_source(new_row, discovered_from="manual")
+    rows.insert(0, new_row)
     save_database(rows)
     print("Link added successfully.")
     return True

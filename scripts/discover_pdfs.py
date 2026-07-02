@@ -9,6 +9,7 @@ from urllib.parse import unquote, urlparse
 
 from csv_backup import write_csv_with_backup
 from heritage_agent import request_url
+from source_metadata import NEW_SOURCE_COLUMNS, ensure_new_source_columns, mark_new_source
 from source_quality import QUALITY_COLUMNS, quality_for
 from web_ingestion import extract_pdf_links, parse_web_document
 
@@ -30,6 +31,7 @@ COLUMNS = [
     "last_checked",
     "notes",
     *QUALITY_COLUMNS,
+    *NEW_SOURCE_COLUMNS,
 ]
 
 SOURCE_STATUSES = {"verified", "redirect"}
@@ -85,7 +87,8 @@ def load_rows() -> list[dict[str, str]]:
 
 
 def save_rows(rows: list[dict[str, str]]) -> None:
-    backup = write_csv_with_backup(COLUMNS, rows, reason="discover_pdfs")
+    fieldnames = ensure_new_source_columns(list(COLUMNS), rows)
+    backup = write_csv_with_backup(fieldnames, rows, reason="discover_pdfs")
     if backup:
         log(f"Backup saved: {backup}")
 
@@ -144,6 +147,7 @@ def discover_from_source(row: dict[str, str], pdf_limit: int) -> list[dict[str, 
             "notes": f"Discovered from {row.get('title', url)}: {url}",
         }
         candidate.update(quality_for(candidate))
+        mark_new_source(candidate, discovered_from=url)
         discovered.append(candidate)
         if len(discovered) >= pdf_limit:
             break
@@ -169,7 +173,7 @@ def discover_pdfs(
             if key in existing:
                 continue
             existing.add(key)
-            rows.append(candidate)
+            rows.insert(0, candidate)
             added.append(candidate)
             log(f"  added {candidate['link']}")
 

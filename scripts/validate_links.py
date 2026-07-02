@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 
 from document_categories import DOCUMENT_CATEGORY_COLUMNS, classify_document_category
 from csv_backup import write_csv_with_backup
+from source_metadata import NEW_SOURCE_COLUMNS, ensure_new_source_columns, mark_new_source
 from source_quality import QUALITY_COLUMNS, quality_for
 
 
@@ -168,13 +169,14 @@ def load_rows() -> tuple[list[str], list[dict[str, str]]]:
         *REPAIR_COLUMNS,
         *QUALITY_COLUMNS,
         *DOCUMENT_CATEGORY_COLUMNS,
+        *NEW_SOURCE_COLUMNS,
     ]:
         if column not in fieldnames:
             fieldnames.append(column)
         for row in rows:
             row.setdefault(column, "")
 
-    return fieldnames, rows
+    return ensure_new_source_columns(fieldnames, rows), rows
 
 
 def save_rows(fieldnames: list[str], rows: list[dict[str, str]]) -> None:
@@ -218,6 +220,7 @@ def row_for_replacement(original: dict[str, str], link: str, status: str, checke
     row["replacement_checked"] = checked_at
     row.update(quality_for(row))
     row.update(classify_document_category(row))
+    mark_new_source(row, discovered_from=original.get("link", ""), added_at=checked_at)
     return row
 
 

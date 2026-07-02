@@ -136,6 +136,14 @@ run_add_dynasty_sources.bat
 
 This adds source coverage and router vocabulary for major dynasties and rulers including Maurya/Ashoka, Gupta, Chola, Pallava, Chalukya, Rashtrakuta, Pandya, Satavahana, Kakatiya, Hoysala, Mughal, Maratha/Shivaji, and related monuments.
 
+Discover newly published online links from ASI and other trusted heritage seed pages:
+
+```bash
+run_discover_new_sources.bat --per-seed-limit 10
+```
+
+Newly discovered rows are inserted at the top of `metadata/heritage_links.csv`, tagged with `is_new=yes`, timestamped in `added_at`, and shown first in the Admin Dashboard. They remain `pending` until the regular validator checks them.
+
 ## Ask A Question
 
 This runs your architecture:

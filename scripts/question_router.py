@@ -277,6 +277,8 @@ def source_list_answer(question: str, route: dict, limit: int = 12) -> str:
             score += 1
         if row.get("priority") == "high":
             score += 2
+        if row.get("is_new", "").lower() == "yes":
+            score += 1
         if score > 0:
             scored.append((score, row))
 
@@ -288,8 +290,9 @@ def source_list_answer(question: str, route: dict, limit: int = 12) -> str:
 
     lines = [f"Top {len(selected)} matching source links for route `{route.get('intent')}`:"]
     for index, row in enumerate(selected, start=1):
+        new_label = "[NEW] " if row.get("is_new", "").lower() == "yes" else ""
         lines.append(
-            f"{index}. {row.get('title', 'Untitled')} "
+            f"{index}. {new_label}{row.get('title', 'Untitled')} "
             f"({row.get('document_category', 'Uncategorized')}; status={row.get('status', 'unknown')}): "
             f"{row.get('link', '')}"
         )
