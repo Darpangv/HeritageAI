@@ -144,6 +144,8 @@ run_discover_new_sources.bat --per-seed-limit 10
 
 Newly discovered rows are inserted at the top of `metadata/heritage_links.csv`, tagged with `is_new=yes`, timestamped in `added_at`, and shown first in the Admin Dashboard. They remain `pending` until the regular validator checks them.
 
+The Admin Dashboard includes a **New Review** tab for newly discovered sources. Admins can approve a source for RAG, reject it, or keep it in manual review. Each decision is stored in `review_status`, `reviewed_at`, and `reviewed_by`, and every review update creates a CSV backup.
+
 ## Ask A Question
 
 This runs your architecture:

@@ -12,6 +12,8 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from admin_auth import change_password, ensure_auth_file, verify_login  # noqa: E402
+from csv_backup import write_csv_with_backup  # noqa: E402
+from source_metadata import NEW_SOURCE_COLUMNS, utc_now  # noqa: E402
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -68,7 +70,7 @@ def load_links() -> pd.DataFrame:
     with CSV_FILE.open(newline="", encoding="utf-8") as file:
         rows = list(csv.DictReader(file))
     df = pd.DataFrame(rows)
-    for column in ["is_new", "added_at", "discovered_from"]:
+    for column in NEW_SOURCE_COLUMNS:
         if column not in df.columns:
             df[column] = ""
     if not df.empty:
@@ -77,6 +79,63 @@ def load_links() -> pd.DataFrame:
         df = df.sort_values(["_new_rank", "_added_rank"], ascending=[False, False], na_position="last")
         df = df.drop(columns=["_new_rank", "_added_rank"])
     return df
+
+
+def append_note(existing: str, note: str) -> str:
+    existing = (existing or "").strip()
+    return f"{existing} | {note}" if existing else note
+
+
+def update_source_review(link: str, action: str, username: str) -> bool:
+    with CSV_FILE.open(newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        rows = list(reader)
+        fieldnames = list(reader.fieldnames or [])
+
+    for column in NEW_SOURCE_COLUMNS:
+        if column not in fieldnames:
+            fieldnames.append(column)
+        for row in rows:
+            row.setdefault(column, "")
+
+    reviewed_at = utc_now()
+    changed = False
+    for row in rows:
+        if row.get("link", "") != link:
+            continue
+
+        if action == "approve":
+            row["is_new"] = "no"
+            row["review_status"] = "approved"
+            row["usable_for_rag"] = "yes"
+            if row.get("priority", "").lower() in {"", "exclude"}:
+                row["priority"] = "medium"
+            row["notes"] = append_note(row.get("notes", ""), "Admin approved new source for RAG.")
+        elif action == "reject":
+            row["is_new"] = "no"
+            row["review_status"] = "rejected"
+            row["usable_for_rag"] = "no"
+            row["priority"] = "exclude"
+            row["notes"] = append_note(row.get("notes", ""), "Admin rejected new source.")
+        elif action == "manual_review":
+            row["is_new"] = "yes"
+            row["review_status"] = "manual_review"
+            row["usable_for_rag"] = "no"
+            if row.get("priority", "").lower() == "high":
+                row["priority"] = "medium"
+            row["notes"] = append_note(row.get("notes", ""), "Admin marked source for manual review.")
+        else:
+            raise ValueError(f"Unknown review action: {action}")
+
+        row["reviewed_at"] = reviewed_at
+        row["reviewed_by"] = username
+        changed = True
+        break
+
+    if changed:
+        write_csv_with_backup(fieldnames, rows, reason=f"review_{action}")
+        load_vector_stats.clear()
+    return changed
 
 
 @st.cache_data
@@ -231,6 +290,11 @@ quality_counts = counter_for(df, "usable_for_rag")
 priority_counts = counter_for(df, "priority")
 document_category_counts = counter_for(df, "document_category")
 new_count = int((df["is_new"].fillna("").astype(str).str.lower() == "yes").sum()) if "is_new" in df.columns else 0
+pending_review_count = (
+    int((df["review_status"].fillna("").astype(str).str.lower().isin(["pending_review", "manual_review"])).sum())
+    if "review_status" in df.columns
+    else 0
+)
 
 gis_terms = "gis|map|mapping|geospatial|satellite|remote sensing|earth observation|bhuvan|bhoonidhi|vedas|mosdac|nrsc|isro|earthdata|copernicus|opentopography|sentinel|landsat|uav"
 gis_scan_columns = [column for column in ["title", "category", "source", "link", "notes", "source_type"] if column in df.columns]
@@ -252,7 +316,20 @@ metric_cols[6].metric("Doc Categories", len(document_category_counts))
 metric_cols[7].metric("New", new_count)
 metric_cols[8].metric("Vector Chunks", vector_stats["chunks"])
 
-tabs = st.tabs(["Overview", "Links", "Categories", "GIS/Satellite", "Rules", "Actions", "Vector DB", "Logs", "Admin"])
+tabs = st.tabs(
+    [
+        "Overview",
+        "Links",
+        "New Review",
+        "Categories",
+        "GIS/Satellite",
+        "Rules",
+        "Actions",
+        "Vector DB",
+        "Logs",
+        "Admin",
+    ]
+)
 
 with tabs[0]:
     left, middle, right = st.columns(3)
@@ -285,6 +362,7 @@ with tabs[0]:
                 "category",
                 "document_category",
                 "status",
+                "review_status",
                 "link",
                 "discovered_from",
             ]
@@ -309,6 +387,9 @@ with tabs[1]:
             "region",
             "source",
             "status",
+            "review_status",
+            "reviewed_at",
+            "reviewed_by",
             "source_type",
             "document_category",
             "category_confidence",
@@ -340,6 +421,78 @@ with tabs[1]:
     )
 
 with tabs[2]:
+    st.subheader("New Source Review Queue")
+    st.caption("Approve only sources you want available to RAG answers. Rejected sources stay in the CSV for audit history.")
+
+    review_mask = df["review_status"].fillna("").astype(str).str.lower().isin(["pending_review", "manual_review"])
+    review_df = df[review_mask].copy()
+    st.metric("Awaiting Review", pending_review_count)
+
+    if review_df.empty:
+        st.success("No new sources are waiting for review.")
+    else:
+        review_columns = [
+            column
+            for column in [
+                "added_at",
+                "review_status",
+                "title",
+                "source",
+                "category",
+                "document_category",
+                "status",
+                "usable_for_rag",
+                "priority",
+                "link",
+                "discovered_from",
+                "notes",
+            ]
+            if column in review_df.columns
+        ]
+        st.dataframe(
+            review_df[review_columns],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "link": st.column_config.LinkColumn("link"),
+                "discovered_from": st.column_config.LinkColumn("discovered_from"),
+            },
+        )
+
+        choices = [
+            f"{row.get('title', 'Untitled')} | {row.get('link', '')}"
+            for _, row in review_df.iterrows()
+        ]
+        selected = st.selectbox("Select source", choices)
+        selected_index = choices.index(selected)
+        selected_row = review_df.iloc[selected_index].to_dict()
+
+        st.write(f"Selected: **{selected_row.get('title', 'Untitled')}**")
+        st.link_button("Open Source", selected_row.get("link", ""))
+
+        approve_col, hold_col, reject_col = st.columns(3)
+        username = st.session_state.get("admin_username", "admin")
+
+        with approve_col:
+            if st.button("Approve for RAG", type="primary"):
+                if update_source_review(selected_row.get("link", ""), "approve", username):
+                    st.success("Source approved.")
+                    st.rerun()
+                st.error("Could not update selected source.")
+        with hold_col:
+            if st.button("Needs Manual Review"):
+                if update_source_review(selected_row.get("link", ""), "manual_review", username):
+                    st.warning("Source kept in manual review.")
+                    st.rerun()
+                st.error("Could not update selected source.")
+        with reject_col:
+            if st.button("Reject Source"):
+                if update_source_review(selected_row.get("link", ""), "reject", username):
+                    st.success("Source rejected.")
+                    st.rerun()
+                st.error("Could not update selected source.")
+
+with tabs[3]:
     st.subheader("Document Categories")
     category_df = pd.DataFrame(document_category_counts.items(), columns=["document_category", "count"])
     if category_df.empty:
@@ -375,7 +528,7 @@ with tabs[2]:
         column_config={"link": st.column_config.LinkColumn("link")},
     )
 
-with tabs[3]:
+with tabs[4]:
     st.subheader("GIS, Satellite, Remote Sensing, and Mapping Sources")
     gis_df = df[gis_mask].copy()
     st.metric("GIS/Satellite Sources", len(gis_df))
@@ -415,11 +568,11 @@ with tabs[3]:
         "text/csv",
     )
 
-with tabs[4]:
+with tabs[5]:
     st.subheader("End User Accessibility And Usage Rules")
     st.markdown(read_rules())
 
-with tabs[5]:
+with tabs[6]:
     st.subheader("Operations")
     col1, col2, col3 = st.columns(3)
 
@@ -530,7 +683,7 @@ with tabs[5]:
                 )
             )
 
-with tabs[6]:
+with tabs[7]:
     st.subheader("Vector Memory")
     if not vector_stats["exists"]:
         st.info("Vector DB has not been built yet.")
@@ -560,15 +713,15 @@ with tabs[6]:
             show_result(result)
             st.caption("Search results use webpage/PDF ingestion plus auto-reranking: semantic score + source quality + keyword match + document category fit + source diversity.")
 
-with tabs[7]:
+with tabs[8]:
     st.subheader("Recent Logs")
     log_name = st.selectbox(
         "Log file",
-        ["link_validation.log", "pdf_discovery.log", "auto_ingest.log"],
+        ["link_validation.log", "new_source_discovery.log", "pdf_discovery.log", "auto_ingest.log"],
     )
     st.code(read_log(log_name), language="text")
 
-with tabs[8]:
+with tabs[9]:
     st.subheader("Admin Account")
     st.write("Use this section to change the dashboard password.")
     with st.form("change_admin_password_form"):

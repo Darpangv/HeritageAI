@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 
-NEW_SOURCE_COLUMNS = ["is_new", "added_at", "discovered_from"]
+NEW_SOURCE_COLUMNS = ["is_new", "added_at", "discovered_from", "review_status", "reviewed_at", "reviewed_by"]
 
 
 def utc_now() -> str:
@@ -14,6 +14,9 @@ def mark_new_source(row: dict[str, str], discovered_from: str = "", added_at: st
     row["is_new"] = "yes"
     row["added_at"] = added_at or utc_now()
     row["discovered_from"] = discovered_from
+    row["review_status"] = "pending_review"
+    row["reviewed_at"] = ""
+    row["reviewed_by"] = ""
     return row
 
 
