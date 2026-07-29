@@ -188,6 +188,28 @@ If `OPENAI_API_KEY` is not set, the script still searches, opens PDFs, extracts 
 
 Set a fresh OpenAI API key locally. Do not paste it into chat or commit it to files.
 
+Project-local setup:
+
+```powershell
+notepad .env
+```
+
+Add:
+
+```text
+OPENAI_API_KEY=your_new_rotated_key_here
+HERITAGE_CHAT_MODEL=gpt-5-mini
+```
+
+Save the file. `.env` is ignored by Git, and these launchers now load it automatically:
+
+- `run_chat_ui.bat`
+- `run_admin_dashboard.bat`
+- `run_agent.bat`
+- `run_brain_test.bat`
+
+Temporary PowerShell setup:
+
 PowerShell:
 
 ```powershell

@@ -2,6 +2,7 @@
 setlocal
 
 cd /d "%~dp0"
+call "%~dp0load_project_env.bat"
 
 set "VENV_PY=%~dp0.venv\Scripts\python.exe"
 set "BUNDLED_PY=C:\Users\darpa\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
