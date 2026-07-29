@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import uuid
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 import streamlit as st
@@ -18,6 +20,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from map_views import research_map_config  # noqa: E402
 
 LAST_ANSWER = PROJECT_ROOT / "data" / "extracted" / "last_answer.md"
+CHAT_ERROR_LOG = PROJECT_ROOT / "data" / "logs" / "chat_ui_errors.log"
 MAP_EMBED_RE = re.compile(r"<!--MAP_EMBED_URL:(.*?)-->")
 RESEARCH_MAP_RE = re.compile(r"<!--RESEARCH_MAP_SITE:(.*?)-->")
 
@@ -27,6 +30,19 @@ st.set_page_config(
     page_icon="IH",
     layout="wide",
 )
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def write_chat_error(question: str, output: str, returncode: int | None = None) -> None:
+    CHAT_ERROR_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with CHAT_ERROR_LOG.open("a", encoding="utf-8", errors="replace") as file:
+        file.write(f"{utc_now()} returncode={returncode}\n")
+        file.write(f"question={question}\n")
+        file.write(output[-8000:])
+        file.write("\n---\n")
 
 
 def run_agent(question: str, page_limit: int, session_id: str, memory_enabled: bool) -> tuple[str, str]:
@@ -42,17 +58,35 @@ def run_agent(question: str, page_limit: int, session_id: str, memory_enabled: b
     if not memory_enabled:
         command.append("--no-memory")
 
-    result = subprocess.run(
-        command,
-        cwd=PROJECT_ROOT,
-        text=True,
-        capture_output=True,
-        timeout=240,
-    )
+    env = dict(os.environ)
+    env.setdefault("PYTHONIOENCODING", "utf-8")
+    env.setdefault("PYTHONUTF8", "1")
+    try:
+        result = subprocess.run(
+            command,
+            cwd=PROJECT_ROOT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            timeout=240,
+            env=env,
+        )
+    except Exception as error:
+        output = f"{type(error).__name__}: {error}"
+        write_chat_error(question, output)
+        return (
+            "The local agent could not complete the request. The error was saved to "
+            "`data/logs/chat_ui_errors.log`.\n\n"
+            f"```text\n{output[-4000:]}\n```",
+            output,
+        )
     output = "\n".join(part for part in [result.stdout, result.stderr] if part.strip())
     if result.returncode != 0:
+        write_chat_error(question, output, result.returncode)
         return (
-            "The local agent could not complete the request.\n\n"
+            "The local agent could not complete the request. The error was saved to "
+            "`data/logs/chat_ui_errors.log`.\n\n"
             f"```text\n{output[-4000:]}\n```",
             output,
         )
