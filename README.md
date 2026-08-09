@@ -198,7 +198,9 @@ Add:
 
 ```text
 OPENAI_API_KEY=your_new_rotated_key_here
+OPENAI_BASE_URL=https://agentrouter.org/v1
 HERITAGE_CHAT_MODEL=gpt-5-mini
+HERITAGE_CHAT_ENDPOINT=auto
 ```
 
 Save the file. `.env` is ignored by Git, and these launchers now load it automatically:

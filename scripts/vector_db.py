@@ -19,7 +19,6 @@ VECTOR_DIR = PROJECT_ROOT / "data" / "vector_store"
 SQLITE_FILE = VECTOR_DIR / "heritage_vectors.sqlite"
 LOCAL_DIMENSIONS = 384
 TFIDF_MAX_FEATURES = 5000
-OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings"
 DEFAULT_OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 MIN_RERANK_SCORE = 0.03
 
@@ -75,8 +74,10 @@ def openai_embedding(text: str) -> tuple[list[float], str]:
 
     model = os.environ.get("OPENAI_EMBEDDING_MODEL", DEFAULT_OPENAI_EMBEDDING_MODEL)
     payload = json.dumps({"model": model, "input": text}).encode("utf-8")
+    from openai_compat import openai_endpoint
+
     request = Request(
-        OPENAI_EMBEDDINGS_URL,
+        openai_endpoint("embeddings"),
         data=payload,
         method="POST",
         headers={

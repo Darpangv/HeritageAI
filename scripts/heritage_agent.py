@@ -17,7 +17,6 @@ CSV_FILE = PROJECT_ROOT / "metadata" / "heritage_links.csv"
 PDF_DIR = PROJECT_ROOT / "data" / "pdfs"
 EXTRACT_DIR = PROJECT_ROOT / "data" / "extracted"
 USER_AGENT = "Indian-Heritage-AI-Agent/1.0"
-OPENAI_API_URL = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = "gpt-5-mini"
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:

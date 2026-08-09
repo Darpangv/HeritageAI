@@ -6,7 +6,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from accessibility_policy import ACCESSIBILITY_PROMPT
@@ -19,7 +19,6 @@ if hasattr(sys.stderr, "reconfigure"):
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BRAIN_DIR = PROJECT_ROOT / "data" / "brain"
 BRAIN_LOG = BRAIN_DIR / "last_brain_response.json"
-OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = "gpt-5-mini"
 
 HERITAGE_SYSTEM_PROMPT = """
@@ -59,6 +58,36 @@ def extract_response_text(result: dict) -> str:
     return "\n".join(parts).strip()
 
 
+def extract_chat_completion_text(result: dict) -> str:
+    choices = result.get("choices", [])
+    if not choices:
+        return ""
+    message = choices[0].get("message", {})
+    content = message.get("content", "")
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, dict):
+                parts.append(str(item.get("text") or item.get("content") or ""))
+            else:
+                parts.append(str(item))
+        return "\n".join(part for part in parts if part).strip()
+    return str(content).strip()
+
+
+def format_network_error(error: URLError) -> str:
+    return (
+        "The GPT brain could not reach the configured OpenAI-compatible provider.\n\n"
+        "Check these project settings in `.env`:\n"
+        "- OPENAI_API_KEY\n"
+        "- OPENAI_BASE_URL\n"
+        "- HERITAGE_CHAT_MODEL\n\n"
+        f"Network/provider error:\n{error}"
+    )
+
+
 def format_openai_error(error: HTTPError) -> str:
     body = error.read().decode("utf-8", errors="ignore")
     message = body
@@ -87,6 +116,57 @@ def format_openai_error(error: HTTPError) -> str:
     return f"OpenAI returned HTTP {error.code}.\n\nOpenAI message:\n{message}"
 
 
+def prompt_input(question: str, context: str, sources: list[str] | None = None) -> str:
+    source_text = "\n".join(f"- {source}" for source in (sources or []))
+    return (
+        f"Question:\n{question}\n\n"
+        f"Sources:\n{source_text}\n\n"
+        f"Retrieved context:\n{context}\n\n"
+        "Write the final answer with inline citations. Use source IDs from the retrieved "
+        "context, for example [S1] or [S2], after claims that depend on a source. "
+        "Include page citations like [S1, page 1] when available. "
+        "The application will append the source-link list below the answer."
+    )
+
+
+def request_json(endpoint: str, payload: dict, api_key: str) -> dict:
+    from openai_compat import openai_endpoint
+
+    data = json.dumps(payload).encode("utf-8")
+    request = Request(
+        openai_endpoint(endpoint),
+        data=data,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+    with urlopen(request, timeout=90) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def ask_responses_api(api_key: str, selected_model: str, question: str, context: str, sources: list[str] | None) -> dict:
+    payload = {
+        "model": selected_model,
+        "instructions": HERITAGE_SYSTEM_PROMPT,
+        "input": prompt_input(question, context, sources),
+        "text": {"verbosity": "medium"},
+    }
+    return request_json("responses", payload, api_key)
+
+
+def ask_chat_completions_api(api_key: str, selected_model: str, question: str, context: str, sources: list[str] | None) -> dict:
+    payload = {
+        "model": selected_model,
+        "messages": [
+            {"role": "system", "content": HERITAGE_SYSTEM_PROMPT},
+            {"role": "user", "content": prompt_input(question, context, sources)},
+        ],
+    }
+    return request_json("chat/completions", payload, api_key)
+
+
 def ask_chatgpt(
     question: str,
     context: str,
@@ -100,45 +180,39 @@ def ask_chatgpt(
         return local_source_answer(question=question, context=context, sources=sources)
 
     selected_model = model or os.environ.get("HERITAGE_CHAT_MODEL") or os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
-    source_text = "\n".join(f"- {source}" for source in (sources or []))
-    payload = {
-        "model": selected_model,
-        "instructions": HERITAGE_SYSTEM_PROMPT,
-        "input": (
-            f"Question:\n{question}\n\n"
-            f"Sources:\n{source_text}\n\n"
-            f"Retrieved context:\n{context}\n\n"
-            "Write the final answer with inline citations. Use source IDs from the retrieved "
-            "context, for example [S1] or [S2], after claims that depend on a source. "
-            "Include page citations like [S1, page 1] when available. "
-            "The application will append the source-link list below the answer."
-        ),
-        "text": {"verbosity": "medium"},
-    }
-
-    data = json.dumps(payload).encode("utf-8")
-    request = Request(
-        OPENAI_RESPONSES_URL,
-        data=data,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-    )
+    chat_endpoint = os.environ.get("HERITAGE_CHAT_ENDPOINT", "auto").strip().lower()
 
     BRAIN_DIR.mkdir(parents=True, exist_ok=True)
     try:
-        with urlopen(request, timeout=90) as response:
-            result = json.loads(response.read().decode("utf-8"))
+        if chat_endpoint in {"chat", "chat_completions", "chat/completions"}:
+            result = ask_chat_completions_api(api_key, selected_model, question, context, sources)
+            output_text = extract_chat_completion_text(result)
+            used_endpoint = "chat/completions"
+        else:
+            result = ask_responses_api(api_key, selected_model, question, context, sources)
+            output_text = extract_response_text(result)
+            used_endpoint = "responses"
     except HTTPError as error:
-        return format_openai_error(error)
+        if chat_endpoint == "auto" and error.code in {400, 404, 405}:
+            try:
+                result = ask_chat_completions_api(api_key, selected_model, question, context, sources)
+                output_text = extract_chat_completion_text(result)
+                used_endpoint = "chat/completions"
+            except HTTPError as chat_error:
+                return format_openai_error(chat_error)
+            except URLError as chat_error:
+                return format_network_error(chat_error)
+        else:
+            return format_openai_error(error)
+    except URLError as error:
+        return format_network_error(error)
 
     BRAIN_LOG.write_text(
         json.dumps(
             {
                 "created_at": current_time(),
                 "model": selected_model,
+                "endpoint": used_endpoint,
                 "question": question,
                 "sources": sources or [],
                 "response": result,
@@ -148,7 +222,7 @@ def ask_chatgpt(
         ),
         encoding="utf-8",
     )
-    return extract_response_text(result) or "The model returned no output text."
+    return output_text or "The model returned no output text."
 
 
 def main() -> None:
